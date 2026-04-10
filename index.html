@@ -156,7 +156,7 @@
           
           <div>
             <span class="input-label">Product Package</span>
-            <input type="text" id="productPackage" class="input-box" placeholder="e.g. Standard Kit, 2x Pasta">
+            <input type="text" id="productPackage" class="input-box" placeholder="e.g. GDG Premium Box, 2x Ice Cream Pints">
           </div>
 
           <div class="form-grid-2">
@@ -192,7 +192,7 @@
 
   <script>
     // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE ⚠️
-    const GAS_URL = "YOUR_WEB_APP_URL_HERE";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyAkmEqNUiJU4zPa_MfxPIYEvPki3vaFewaYVfuc88NzJg9Nj7JB1CUXPHScb250vaQEA/exec";
 
     window.onload = function() {
       fetchDashboardData();
@@ -213,7 +213,6 @@
       }
     }
 
-    // Function to generate and copy logistics text
     function copyDispatchText() {
       const name = document.getElementById("kolName").value || "TBD";
       const phone = document.getElementById("logPhone").value || "TBD";
@@ -238,7 +237,7 @@
       btn.textContent = "↻ Fetching...";
       
       try {
-        const response = await fetch(GAS_URL);
+        const response = await fetch(GAS_URL, { redirect: "follow" });
         const result = await response.json();
         
         if(result.status === "success") {
@@ -263,10 +262,12 @@
             });
             tbody.innerHTML = html;
           }
+        } else {
+            throw new Error(result.message || "Unknown error from server");
         }
       } catch (error) {
         console.error(error);
-        document.getElementById('entriesTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting to database. Please make sure you deployed a "New Version" in Apps Script.</td></tr>';
+        document.getElementById('entriesTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting. Please check if "Who has access" is set to "Anyone" in Google Sheets.</td></tr>`;
       }
       btn.textContent = "↻ Refresh Live Data";
     }

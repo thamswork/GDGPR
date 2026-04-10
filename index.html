@@ -11,7 +11,6 @@
       --canvas: #f7f5f0; --surface: #ffffff; --border: #e4e1db; --border-soft: #ede9e3;
       --text: #1a1f2e; --text-2: #5a5750; --text-3: #9a9690;
       --s-green: #166534; --s-green-bg: #dcfce7; --s-green-border: #86efac;
-      --s-amber: #92570a; --s-amber-bg: #fef3c7; --s-amber-border: #fcd34d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif; background: var(--canvas); min-height: 100vh; padding-bottom: 60px; }
@@ -21,14 +20,13 @@
     .nav-wordmark { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; }
     .nav-tag { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 1.5px; text-transform: uppercase; }
     
-    /* New Tab Navigation CSS */
     .tab-menu { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
     .tab-btn { flex: 1; text-align: center; padding: 14px 0; font-size: 12px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: 0.2s; border-bottom: 3px solid transparent; }
     .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
 
     .content { padding: 16px; max-width: 600px; margin: 0 auto; }
     .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(26,31,46,0.04); }
-    .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; }
+    .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; display: flex; justify-content: space-between;}
     
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -38,15 +36,23 @@
     .input-box:focus { border-color: var(--navy); background: var(--surface); }
     textarea.input-box { height: 80px; padding: 12px; resize: none; }
     
-    .btn-primary { background: var(--navy); color: #fff; height: 48px; width: 100%; padding: 0 20px; border: none; border-radius: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: 0.15s; text-transform: uppercase; margin-top: 10px; }
+    .btn-primary { background: var(--navy); color: #fff; height: 48px; width: 100%; padding: 0 20px; border: none; border-radius: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: 0.15s; text-transform: uppercase; }
     .btn-primary:active { transform: scale(0.98); }
     .btn-primary.success { background: var(--s-green); color: #fff; }
+    
+    .btn-secondary { background: var(--canvas); color: var(--navy); border: 1px solid var(--border); }
 
-    /* Dashboard Stats CSS */
+    .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 0; }
+    .checkbox-group label { font-size: 12px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+
     .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .stat-card { padding: 20px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+    .stat-card { padding: 16px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
     .stat-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .stat-value { font-size: 32px; font-weight: 800; color: var(--text); margin-bottom: 4px;}
+    .stat-value { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 4px;}
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; margin-top: 10px;}
+    .data-table th { padding: 8px; color: var(--text-3); font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 10px 8px; color: var(--text); border-bottom: 1px solid var(--border-soft); font-weight: 500; }
   </style>
 </head>
 <body>
@@ -59,13 +65,61 @@
   </nav>
 
   <div class="tab-menu">
-    <div class="tab-btn active" id="tabEntry" onclick="switchView('entry')">Data Entry</div>
-    <div class="tab-btn" id="tabReport" onclick="switchView('report')">Live Reporting</div>
+    <div class="tab-btn active" id="tabReport" onclick="switchView('report')">Live Reporting</div>
+    <div class="tab-btn" id="tabEntry" onclick="switchView('entry')">Data Entry</div>
   </div>
 
   <div class="content">
     
-    <div id="viewEntry">
+    <div id="viewReport">
+      <div class="admin-card">
+        <div class="section-title">
+          <span>Campaign Status</span>
+          <span id="currentMonthDisplay" style="color: var(--navy);">Loading...</span>
+        </div>
+        
+        <div class="summary-grid" style="margin-bottom: 16px;">
+          <div class="stat-card" style="background: var(--surface); grid-column: 1 / -1;">
+            <div class="stat-label">Total Seeded This Month</div>
+            <div class="stat-value" id="valTotalSeeded">--</div>
+            <div style="font-size: 12px; color: var(--text-3); font-weight: 600;">Target: 15 to 20 KOLs</div>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="stat-card" style="background: var(--red-soft); border-color: var(--red-border);">
+            <div class="stat-label" style="color: var(--red);">To Reach Min (15)</div>
+            <div class="stat-value" style="color: var(--red);" id="valToMin">--</div>
+          </div>
+          <div class="stat-card" style="background: var(--s-green-bg); border-color: var(--s-green-border);">
+            <div class="stat-label" style="color: var(--s-green);">Remaining Slots</div>
+            <div class="stat-value" style="color: var(--s-green);" id="valToMax">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="section-title">Recent Entries</div>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>KOL</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Formats</th>
+              </tr>
+            </thead>
+            <tbody id="entriesTableBody">
+              <tr><td colspan="4" style="text-align:center;">Loading data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn-primary btn-secondary" id="btnRefresh" style="margin-top: 16px;" onclick="fetchDashboardData()">↻ Refresh Live Data</button>
+      </div>
+    </div>
+
+    <div id="viewEntry" style="display: none;">
       <div class="admin-card">
         <div class="section-title">New KOL Entry</div>
         <div class="form-grid">
@@ -77,22 +131,20 @@
             <span class="input-label">Profile URL</span>
             <input type="text" id="handleUrl" class="input-box" placeholder="instagram.com/thyme">
           </div>
-          <div class="form-grid-2">
-            <div>
-              <span class="input-label">Seeding Type</span>
-              <select id="seedingType" class="input-box">
-                <option value="Delivery">Delivery</option>
-                <option value="Store Invite">Store Invite</option>
-              </select>
-            </div>
-            <div>
-              <span class="input-label">Expected Deliverable</span>
-              <select id="deliverable" class="input-box">
-                <option value="IG Story">IG Story</option>
-                <option value="IG Reel">IG Reel</option>
-                <option value="TikTok">TikTok</option>
-                <option value="Photo Dump">Photo Dump</option>
-              </select>
+          <div>
+            <span class="input-label">Seeding Type</span>
+            <select id="seedingType" class="input-box">
+              <option value="Delivery">Delivery</option>
+              <option value="Store Invite">Store Invite</option>
+            </select>
+          </div>
+          <div>
+            <span class="input-label">Content Format(s)</span>
+            <div class="checkbox-group">
+              <label><input type="checkbox" class="cb-format" value="IG Story"> IG Story</label>
+              <label><input type="checkbox" class="cb-format" value="IG Reel"> IG Reel</label>
+              <label><input type="checkbox" class="cb-format" value="TikTok"> TikTok</label>
+              <label><input type="checkbox" class="cb-format" value="Photo Dump"> Photo Dump</label>
             </div>
           </div>
         </div>
@@ -119,98 +171,114 @@
             <span class="input-label">Address / Venue Details</span>
             <textarea id="logAddress" class="input-box" placeholder="Full address or Store Name"></textarea>
           </div>
-          <button class="btn-primary" id="btnSubmit" onclick="submitData()">Log KOL Data</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="viewReport" style="display: none;">
-      <div class="admin-card">
-        <div class="section-title">Campaign Progress Status</div>
-        
-        <div class="summary-grid" style="margin-bottom: 16px;">
-          <div class="stat-card" style="background: var(--surface); grid-column: 1 / -1;">
-            <div class="stat-label">Total Seeded So Far</div>
-            <div class="stat-value" id="valTotalSeeded">--</div>
-            <div style="font-size: 12px; color: var(--text-3); font-weight: 600;">Target: 15 to 20 KOLs</div>
-          </div>
-        </div>
-
-        <div class="summary-grid">
-          <div class="stat-card" style="background: var(--red-soft); border-color: var(--red-border);">
-            <div class="stat-label" style="color: var(--red);">To Reach Minimum (15)</div>
-            <div class="stat-value" style="color: var(--red);" id="valToMin">--</div>
-            <div style="font-size: 11px; color: var(--red); font-weight: 600;">KOLs Left</div>
-          </div>
           
-          <div class="stat-card" style="background: var(--s-green-bg); border-color: var(--s-green-border);">
-            <div class="stat-label" style="color: var(--s-green);">Remaining Slots (Max 20)</div>
-            <div class="stat-value" style="color: var(--s-green);" id="valToMax">--</div>
-            <div style="font-size: 11px; color: var(--s-green); font-weight: 600;">KOLs Left</div>
+          <div style="display: flex; gap: 10px; margin-top: 8px;">
+            <button class="btn-primary" id="btnSubmit" style="flex: 2;" onclick="submitData()">Log Data</button>
+            <button class="btn-primary btn-secondary" id="btnCopy" style="flex: 1;" onclick="copyDispatchText()">📋 Copy Logistics</button>
           </div>
         </div>
-
-        <button class="btn-primary" id="btnRefresh" style="background: var(--canvas); color: var(--navy); border: 1px solid var(--border); margin-top: 16px;" onclick="fetchDashboardData()">↻ Refresh Live Data</button>
-
       </div>
     </div>
 
   </div>
 
   <script>
-    // System connected directly to your Google Sheet deployment
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyAkmEqNUiJU4zPa_MfxPIYEvPki3vaFewaYVfuc88NzJg9Nj7JB1CUXPHScb250vaQEA/exec";
+    // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+    const GAS_URL = "YOUR_WEB_APP_URL_HERE";
 
-    // Navigation Logic
+    // Auto-load reporting data on startup
+    window.onload = function() {
+      fetchDashboardData();
+    };
+
     function switchView(view) {
-      if (view === 'entry') {
+      if (view === 'report') {
+        document.getElementById('viewReport').style.display = 'block';
+        document.getElementById('viewEntry').style.display = 'none';
+        document.getElementById('tabReport').classList.add('active');
+        document.getElementById('tabEntry').classList.remove('active');
+        fetchDashboardData();
+      } else {
         document.getElementById('viewEntry').style.display = 'block';
         document.getElementById('viewReport').style.display = 'none';
         document.getElementById('tabEntry').classList.add('active');
         document.getElementById('tabReport').classList.remove('active');
-      } else {
-        document.getElementById('viewEntry').style.display = 'none';
-        document.getElementById('viewReport').style.display = 'block';
-        document.getElementById('tabReport').classList.add('active');
-        document.getElementById('tabEntry').classList.remove('active');
-        // Auto-fetch data when opening the tab
-        fetchDashboardData();
       }
     }
 
-    // Reporting Fetch Logic
+    // Function to generate and copy logistics text
+    function copyDispatchText() {
+      const name = document.getElementById("kolName").value || "TBD";
+      const phone = document.getElementById("logPhone").value || "TBD";
+      const date = document.getElementById("logDate").value || "TBD";
+      const time = document.getElementById("logTime").value || "TBD";
+      const address = document.getElementById("logAddress").value || "TBD";
+      
+      const dispatchText = `Name: ${name}\nPhone: ${phone}\nDate: ${date}\nTime: ${time}\nAddress: ${address}`;
+      
+      navigator.clipboard.writeText(dispatchText).then(() => {
+        const btn = document.getElementById("btnCopy");
+        btn.textContent = "✓ COPIED";
+        setTimeout(() => { btn.textContent = "📋 Copy Logistics"; }, 2000);
+      }).catch(err => {
+        alert("Failed to copy. Please check browser permissions.");
+      });
+    }
+
     async function fetchDashboardData() {
       const btn = document.getElementById("btnRefresh");
-      btn.textContent = "↻ Fetching Live Data...";
+      btn.textContent = "↻ Fetching...";
       
       try {
         const response = await fetch(GAS_URL);
         const result = await response.json();
         
         if(result.status === "success") {
+          document.getElementById('currentMonthDisplay').textContent = result.data.month;
           document.getElementById('valTotalSeeded').textContent = result.data.totalSeeded;
           document.getElementById('valToMin').textContent = result.data.remainingToMin;
           document.getElementById('valToMax').textContent = result.data.remainingToMax;
-        } else {
-          alert("Could not load data. Check sheet connection.");
+
+          // Populate the table
+          const tbody = document.getElementById('entriesTableBody');
+          if (result.data.entries.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-3);">No entries logged this month.</td></tr>';
+          } else {
+            let html = "";
+            result.data.entries.forEach(entry => {
+              // Ensure we truncate long text for mobile view
+              const fmtDate = entry.date ? entry.date.toString().substring(0, 10) : '';
+              html += `<tr>
+                        <td style="font-weight: 700;">${entry.kol}</td>
+                        <td>${fmtDate}</td>
+                        <td>${entry.type}</td>
+                        <td style="font-size: 9px;">${entry.formats}</td>
+                       </tr>`;
+            });
+            tbody.innerHTML = html;
+          }
         }
       } catch (error) {
         console.error(error);
-        alert("Failed to connect to the database.");
+        document.getElementById('entriesTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting to database.</td></tr>';
       }
-      
       btn.textContent = "↻ Refresh Live Data";
     }
 
-    // Data Submission Logic (From Phase 1)
     async function submitData() {
       const btn = document.getElementById("btnSubmit");
       
+      // Gather multiple checkbox values
+      const checkboxes = document.querySelectorAll('.cb-format:checked');
+      let formats = [];
+      checkboxes.forEach((cb) => { formats.push(cb.value); });
+      const formatString = formats.join(", ");
+
       const payload = {
         kolName: document.getElementById("kolName").value,
         handleUrl: document.getElementById("handleUrl").value,
         seedingType: document.getElementById("seedingType").value,
-        deliverable: document.getElementById("deliverable").value,
+        deliverable: formatString, // Sending the comma-separated string
         date: document.getElementById("logDate").value,
         time: document.getElementById("logTime").value,
         phone: document.getElementById("logPhone").value,
@@ -218,11 +286,11 @@
       };
 
       if(!payload.kolName || !payload.date || !payload.address || !payload.phone) {
-        alert("Please fill in the KOL Name, Phone, Date, and Address for logistics.");
+        alert("Please fill in the KOL Name, Phone, Date, and Address.");
         return;
       }
 
-      btn.textContent = "SENDING TO DATABASE...";
+      btn.textContent = "SENDING...";
       btn.style.opacity = "0.7";
       btn.disabled = true;
 
@@ -236,23 +304,25 @@
         const result = await response.json();
         
         if(result.status === "success") {
-          btn.textContent = "✓ DATA LOGGED SUCCESSFULLY";
+          btn.textContent = "✓ LOGGED";
           btn.classList.add("success");
           
+          // Clear Inputs
           document.querySelectorAll('.input-box').forEach(input => {
             if(input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') input.value = '';
           });
+          document.querySelectorAll('.cb-format').forEach(cb => cb.checked = false);
 
           setTimeout(() => {
-            btn.textContent = "LOG KOL DATA";
+            btn.textContent = "LOG DATA";
             btn.classList.remove("success");
             btn.style.opacity = "1";
             btn.disabled = false;
-          }, 3000);
+          }, 2000);
         }
       } catch (error) {
         alert("Submission sent. Verify in Google Sheets.");
-        btn.textContent = "LOG KOL DATA";
+        btn.textContent = "LOG DATA";
         btn.style.opacity = "1";
         btn.disabled = false;
       }

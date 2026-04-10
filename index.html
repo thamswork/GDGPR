@@ -171,13 +171,13 @@
             </div>
           </div>
           
-          <div>
-            <span class="input-label" id="phoneLabel">Phone Number</span>
+          <div id="phoneContainer">
+            <span class="input-label">Phone Number</span>
             <input type="tel" id="logPhone" class="input-box" placeholder="08X-XXX-XXXX">
           </div>
           
-          <div>
-            <span class="input-label" id="addressLabel">Address / Venue Details</span>
+          <div id="addressContainer">
+            <span class="input-label">Address / Venue Details</span>
             <textarea id="logAddress" class="input-box" placeholder="Full address or Store Name"></textarea>
           </div>
           
@@ -192,24 +192,36 @@
   </div>
 
   <script>
-    // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE ⚠️
+    // URL HAS BEEN FULLY INJECTED HERE
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyAkmEqNUiJU4zPa_MfxPIYEvPki3vaFewaYVfuc88NzJg9Nj7JB1CUXPHScb250vaQEA/exec";
 
     window.onload = function() {
       fetchDashboardData();
     };
 
-    // --- NEW: Smart Form Toggle Logic ---
+    // Smart Form Toggle Logic
     document.getElementById("seedingType").addEventListener("change", function() {
       const type = this.value;
       const pkgContainer = document.getElementById("packageContainer");
+      const phoneContainer = document.getElementById("phoneContainer");
+      const addressContainer = document.getElementById("addressContainer");
       
       if(type === "Store Invite") {
         pkgContainer.style.display = "none";
-        document.getElementById("productPackage").value = "N/A"; // Auto-fill so backend doesn't crash
+        phoneContainer.style.display = "none";
+        addressContainer.style.display = "none";
+        
+        document.getElementById("productPackage").value = "N/A";
+        document.getElementById("logPhone").value = "N/A";
+        document.getElementById("logAddress").value = "Store Visit";
       } else {
         pkgContainer.style.display = "block";
+        phoneContainer.style.display = "block";
+        addressContainer.style.display = "block";
+        
         document.getElementById("productPackage").value = ""; 
+        if(document.getElementById("logPhone").value === "N/A") document.getElementById("logPhone").value = ""; 
+        if(document.getElementById("logAddress").value === "Store Visit") document.getElementById("logAddress").value = ""; 
       }
     });
 
@@ -236,10 +248,9 @@
       const time = document.getElementById("logTime").value || "TBD";
       const address = document.getElementById("logAddress").value || "TBD";
       
-      // If it's a store invite, don't include the package line in the copy
       let dispatchText = "";
       if (document.getElementById("seedingType").value === "Store Invite") {
-        dispatchText = `Name: ${name}\nPhone: ${phone}\nDate: ${date}\nTime: ${time}\nVenue: ${address}`;
+        dispatchText = `Name: ${name}\nDate: ${date}\nTime: ${time}\nVenue: GDG`;
       } else {
         dispatchText = `Name: ${name}\nPhone: ${phone}\nPackage: ${pkg}\nDate: ${date}\nTime: ${time}\nAddress: ${address}`;
       }
@@ -275,10 +286,8 @@
             result.data.entries.forEach(entry => {
               const fmtDate = entry.date ? entry.date.toString().substring(0, 10) : '';
               
-              // --- NEW: Generate Clickable Hyperlink ---
               let linkFormat = entry.kol;
-              if (entry.url && entry.url !== "") {
-                 // Ensure the link works even if they didn't type "https://"
+              if (entry.url && entry.url !== "" && entry.url !== "TBD") {
                  let safeUrl = entry.url.startsWith("http") ? entry.url : "https://" + entry.url;
                  linkFormat = `<a href="${safeUrl}" target="_blank" class="kol-link">${entry.kol}</a>`;
               }
@@ -297,7 +306,7 @@
         }
       } catch (error) {
         console.error(error);
-        document.getElementById('entriesTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting. Please check your sheet connection.</td></tr>`;
+        document.getElementById('entriesTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting. Please check if "Who has access" is set to "Anyone" in Google Sheets.</td></tr>`;
       }
       btn.textContent = "↻ Refresh Live Data";
     }
@@ -322,7 +331,6 @@
         address: document.getElementById("logAddress").value
       };
 
-      // --- NEW: Smart Validation based on Seeding Type ---
       if (payload.seedingType === "Delivery") {
         if(!payload.kolName || !payload.date || !payload.address || !payload.phone || !payload.packageStr) {
           alert("For Deliveries: Please fill in the KOL Name, Package, Phone, Date, and Address.");
@@ -356,12 +364,20 @@
             if(input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') input.value = '';
           });
           document.querySelectorAll('.cb-format').forEach(cb => cb.checked = false);
+          
+          // Reset hidden fields just in case
+          if (document.getElementById("seedingType").value === "Store Invite") {
+             document.getElementById("productPackage").value = "N/A";
+             document.getElementById("logPhone").value = "N/A";
+             document.getElementById("logAddress").value = "Store Visit";
+          }
 
           setTimeout(() => {
             btn.textContent = "LOG DATA";
             btn.classList.remove("success");
             btn.style.opacity = "1";
             btn.disabled = false;
+            fetchDashboardData(); // Instantly update the dashboard tab!
           }, 2000);
         }
       } catch (error) {

@@ -153,6 +153,12 @@
       <div class="admin-card">
         <div class="section-title">Logistics Details</div>
         <div class="form-grid">
+          
+          <div>
+            <span class="input-label">Product Package</span>
+            <input type="text" id="productPackage" class="input-box" placeholder="e.g. Standard Kit, 2x Pasta">
+          </div>
+
           <div class="form-grid-2">
             <div>
               <span class="input-label">Date</span>
@@ -163,10 +169,12 @@
               <input type="time" id="logTime" class="input-box">
             </div>
           </div>
+          
           <div>
             <span class="input-label">Phone Number</span>
             <input type="tel" id="logPhone" class="input-box" placeholder="08X-XXX-XXXX">
           </div>
+          
           <div>
             <span class="input-label">Address / Venue Details</span>
             <textarea id="logAddress" class="input-box" placeholder="Full address or Store Name"></textarea>
@@ -183,10 +191,9 @@
   </div>
 
   <script>
-    // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+    // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE ⚠️
     const GAS_URL = "YOUR_WEB_APP_URL_HERE";
 
-    // Auto-load reporting data on startup
     window.onload = function() {
       fetchDashboardData();
     };
@@ -210,11 +217,12 @@
     function copyDispatchText() {
       const name = document.getElementById("kolName").value || "TBD";
       const phone = document.getElementById("logPhone").value || "TBD";
+      const pkg = document.getElementById("productPackage").value || "TBD";
       const date = document.getElementById("logDate").value || "TBD";
       const time = document.getElementById("logTime").value || "TBD";
       const address = document.getElementById("logAddress").value || "TBD";
       
-      const dispatchText = `Name: ${name}\nPhone: ${phone}\nDate: ${date}\nTime: ${time}\nAddress: ${address}`;
+      const dispatchText = `Name: ${name}\nPhone: ${phone}\nPackage: ${pkg}\nDate: ${date}\nTime: ${time}\nAddress: ${address}`;
       
       navigator.clipboard.writeText(dispatchText).then(() => {
         const btn = document.getElementById("btnCopy");
@@ -239,14 +247,12 @@
           document.getElementById('valToMin').textContent = result.data.remainingToMin;
           document.getElementById('valToMax').textContent = result.data.remainingToMax;
 
-          // Populate the table
           const tbody = document.getElementById('entriesTableBody');
           if (result.data.entries.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-3);">No entries logged this month.</td></tr>';
           } else {
             let html = "";
             result.data.entries.forEach(entry => {
-              // Ensure we truncate long text for mobile view
               const fmtDate = entry.date ? entry.date.toString().substring(0, 10) : '';
               html += `<tr>
                         <td style="font-weight: 700;">${entry.kol}</td>
@@ -260,7 +266,7 @@
         }
       } catch (error) {
         console.error(error);
-        document.getElementById('entriesTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting to database.</td></tr>';
+        document.getElementById('entriesTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting to database. Please make sure you deployed a "New Version" in Apps Script.</td></tr>';
       }
       btn.textContent = "↻ Refresh Live Data";
     }
@@ -268,7 +274,6 @@
     async function submitData() {
       const btn = document.getElementById("btnSubmit");
       
-      // Gather multiple checkbox values
       const checkboxes = document.querySelectorAll('.cb-format:checked');
       let formats = [];
       checkboxes.forEach((cb) => { formats.push(cb.value); });
@@ -278,15 +283,16 @@
         kolName: document.getElementById("kolName").value,
         handleUrl: document.getElementById("handleUrl").value,
         seedingType: document.getElementById("seedingType").value,
-        deliverable: formatString, // Sending the comma-separated string
+        deliverable: formatString,
+        packageStr: document.getElementById("productPackage").value,
         date: document.getElementById("logDate").value,
         time: document.getElementById("logTime").value,
         phone: document.getElementById("logPhone").value,
         address: document.getElementById("logAddress").value
       };
 
-      if(!payload.kolName || !payload.date || !payload.address || !payload.phone) {
-        alert("Please fill in the KOL Name, Phone, Date, and Address.");
+      if(!payload.kolName || !payload.date || !payload.address || !payload.phone || !payload.packageStr) {
+        alert("Please fill in the KOL Name, Package, Phone, Date, and Address.");
         return;
       }
 
@@ -307,7 +313,6 @@
           btn.textContent = "✓ LOGGED";
           btn.classList.add("success");
           
-          // Clear Inputs
           document.querySelectorAll('.input-box').forEach(input => {
             if(input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') input.value = '';
           });

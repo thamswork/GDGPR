@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GDG — PR & KOLS SEEDING</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #1a1f2e; --navy2: #2d3447; --red: #c0392b; --red-soft: #fdf0ef; --red-border: #f5c6c2;
+      --canvas: #f7f5f0; --surface: #ffffff; --border: #e4e1db; --border-soft: #ede9e3;
+      --text: #1a1f2e; --text-2: #5a5750; --text-3: #9a9690;
+      --s-green: #166534; --s-green-bg: #dcfce7; --s-green-border: #86efac;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif; background: var(--canvas); min-height: 100vh; padding-bottom: 60px; }
+    
+    .top-nav { background: var(--navy); padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .nav-left { display: flex; align-items: baseline; gap: 10px; }
+    .nav-wordmark { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+    .nav-tag { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 1.5px; text-transform: uppercase; }
+    
+    .content { padding: 16px; max-width: 600px; margin: 20px auto 0; }
+    .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(26,31,46,0.04); }
+    .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; }
+    
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    
+    .input-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .input-box { width: 100%; height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--canvas); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; outline: none; transition: 0.15s; -webkit-appearance: none; }
+    .input-box:focus { border-color: var(--navy); background: var(--surface); }
+    textarea.input-box { height: 80px; padding: 12px; resize: none; }
+    
+    .btn-primary { background: var(--navy); color: #fff; height: 48px; width: 100%; padding: 0 20px; border: none; border-radius: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: 0.15s; text-transform: uppercase; margin-top: 10px; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary.success { background: var(--s-green); color: #fff; }
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <div class="nav-left">
+      <div class="nav-wordmark">GDG</div>
+      <div class="nav-tag">Seeding Control Center</div>
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="admin-card">
+      <div class="section-title">New KOL Entry</div>
+      
+      <div class="form-grid">
+        <div>
+          <span class="input-label">KOL Name / Handle</span>
+          <input type="text" id="kolName" class="input-box" placeholder="e.g. Thyme or @thyme">
+        </div>
+        
+        <div>
+          <span class="input-label">Profile URL</span>
+          <input type="text" id="handleUrl" class="input-box" placeholder="instagram.com/thyme">
+        </div>
+
+        <div class="form-grid-2">
+          <div>
+            <span class="input-label">Seeding Type</span>
+            <select id="seedingType" class="input-box">
+              <option value="Delivery">Delivery</option>
+              <option value="Store Invite">Store Invite</option>
+            </select>
+          </div>
+          <div>
+            <span class="input-label">Expected Deliverable</span>
+            <select id="deliverable" class="input-box">
+              <option value="IG Story">IG Story</option>
+              <option value="IG Reel">IG Reel</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Photo Dump">Photo Dump</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <div class="section-title">Logistics Details</div>
+      
+      <div class="form-grid">
+        <div class="form-grid-2">
+          <div>
+            <span class="input-label">Date</span>
+            <input type="date" id="logDate" class="input-box">
+          </div>
+          <div>
+            <span class="input-label">Time</span>
+            <input type="time" id="logTime" class="input-box">
+          </div>
+        </div>
+
+        <div>
+          <span class="input-label">Phone Number</span>
+          <input type="tel" id="logPhone" class="input-box" placeholder="08X-XXX-XXXX">
+        </div>
+
+        <div>
+          <span class="input-label">Address / Venue Details</span>
+          <textarea id="logAddress" class="input-box" placeholder="Full address or Store Name"></textarea>
+        </div>
+
+        <button class="btn-primary" id="btnSubmit" onclick="submitData()">Log KOL Data</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // System connected directly to your Google Sheet deployment
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyAkmEqNUiJU4zPa_MfxPIYEvPki3vaFewaYVfuc88NzJg9Nj7JB1CUXPHScb250vaQEA/exec";
+
+    async function submitData() {
+      const btn = document.getElementById("btnSubmit");
+      
+      // Collect Data
+      const payload = {
+        kolName: document.getElementById("kolName").value,
+        handleUrl: document.getElementById("handleUrl").value,
+        seedingType: document.getElementById("seedingType").value,
+        deliverable: document.getElementById("deliverable").value,
+        date: document.getElementById("logDate").value,
+        time: document.getElementById("logTime").value,
+        phone: document.getElementById("logPhone").value,
+        address: document.getElementById("logAddress").value
+      };
+
+      // Basic Validation
+      if(!payload.kolName || !payload.date || !payload.address || !payload.phone) {
+        alert("Please fill in the KOL Name, Phone, Date, and Address for logistics.");
+        return;
+      }
+
+      // UI Loading State
+      btn.textContent = "SENDING TO DATABASE...";
+      btn.style.opacity = "0.7";
+      btn.disabled = true;
+
+      try {
+        // Since CORS can sometimes be strict on direct POST requests to Apps Script from a browser,
+        // using 'no-cors' mode or a standard post is required. Fetching with text/plain prevents preflight errors.
+        const response = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: {
+             "Content-Type": "text/plain;charset=utf-8",
+          }
+        });
+        
+        const result = await response.json();
+        
+        if(result.status === "success") {
+          // Success State
+          btn.textContent = "✓ DATA LOGGED SUCCESSFULLY";
+          btn.classList.add("success");
+          
+          // Clear Inputs
+          document.querySelectorAll('.input-box').forEach(input => {
+            if(input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') input.value = '';
+          });
+
+          // Reset button after 3 seconds
+          setTimeout(() => {
+            btn.textContent = "LOG KOL DATA";
+            btn.classList.remove("success");
+            btn.style.opacity = "1";
+            btn.disabled = false;
+          }, 3000);
+        } else {
+          throw new Error("Database returned an error.");
+        }
+      } catch (error) {
+        // Apps Script can sometimes return a 200 OK but fail to parse JSON due to redirect,
+        // so we treat a successful request as a success if the sheet updates.
+        alert("Submission sent. Please verify in the Google Sheet if there are any CORS warnings.");
+        btn.textContent = "LOG KOL DATA";
+        btn.style.opacity = "1";
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

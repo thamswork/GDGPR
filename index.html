@@ -33,6 +33,7 @@
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     
     .input-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .input-label span.optional { color: #a1a1aa; font-weight: 500; font-size: 9px; }
     .input-box { width: 100%; height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--canvas); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; outline: none; transition: 0.15s; -webkit-appearance: none; }
     .input-box:focus { border-color: var(--navy); background: var(--surface); }
     textarea.input-box { height: 80px; padding: 12px; resize: none; }
@@ -57,7 +58,8 @@
     
     .badge-pending { background: var(--s-amber-bg); color: var(--s-amber); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
     .badge-done { background: var(--s-green-bg); color: var(--s-green); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
-    .edit-btn { background: var(--canvas); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 10px; font-weight: 700; }
+    .edit-btn { background: var(--canvas); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.2s;}
+    .edit-btn:hover { background: var(--navy); color: white;}
 
     /* Edit Modal Styles */
     #editModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
@@ -97,6 +99,17 @@
           </div>
         </div>
 
+        <div class="summary-grid" style="margin-bottom: 12px;">
+          <div class="stat-card" style="background: var(--red-soft); border-color: var(--red-border);">
+            <div class="stat-label" style="color: var(--red);">To Reach Min (15)</div>
+            <div class="stat-value" style="color: var(--red);" id="valToMin">--</div>
+          </div>
+          <div class="stat-card" style="background: var(--s-green-bg); border-color: var(--s-green-border);">
+            <div class="stat-label" style="color: var(--s-green);">Remaining Slots</div>
+            <div class="stat-value" style="color: var(--s-green);" id="valToMax">--</div>
+          </div>
+        </div>
+
         <div class="summary-grid">
           <div class="stat-card" style="background: var(--s-amber-bg); border-color: var(--s-amber-border); grid-column: 1 / -1; padding: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -114,7 +127,7 @@
             <thead>
               <tr>
                 <th>KOL</th>
-                <th>Date</th>
+                <th>Action Date</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -186,7 +199,7 @@
                 <input type="tel" id="logPhone" class="input-box" placeholder="08X-XXX-XXXX">
               </div>
               <div>
-                <span class="input-label">Backup Phone</span>
+                <span class="input-label">Backup Phone <span class="optional">(Optional)</span></span>
                 <input type="tel" id="backupPhone" class="input-box" placeholder="Optional">
               </div>
             </div>
@@ -197,19 +210,14 @@
             </div>
 
             <div>
-              <span class="input-label">Google Map Link</span>
+              <span class="input-label">Google Map Link <span class="optional">(Optional)</span></span>
               <input type="text" id="googleMap" class="input-box" placeholder="goo.gl/maps/...">
             </div>
           </div>
           
           <div id="venueFields" style="display: none;">
-            <span class="input-label">Select Venue</span>
-            <select id="storeVenue" class="input-box">
-              <option value="GDG">GDG</option>
-              <option value="BIANCA">BIANCA</option>
-              <option value="LAVA">LAVA</option>
-              <option value="HOLYBELLY">HOLYBELLY</option>
-            </select>
+            <span class="input-label">Enter Venue Name</span>
+            <input type="text" id="storeVenue" class="input-box" placeholder="e.g. BIANCA EMSPHERE">
           </div>
           
           <div style="display: flex; gap: 10px; margin-top: 12px;">
@@ -278,7 +286,6 @@
       fetchDashboardData();
     };
 
-    // Phase 1: Smart Form Toggle Logic
     document.getElementById("seedingType").addEventListener("change", function() {
       const type = this.value;
       const pkgContainer = document.getElementById("packageContainer");
@@ -311,7 +318,6 @@
       }
     }
 
-    // Modal Control Functions
     function openEditModal(id, name, type, date, handoff, content, link) {
       activeEditId = id;
       activeEditType = type;
@@ -325,7 +331,7 @@
       
       if(type === "Delivery") {
         document.getElementById('editLogisticsContainer').style.display = "block";
-        document.getElementById('editLogistics').value = "false"; // Default safe assumption, can't easily fetch true/false without slowing app
+        document.getElementById('editLogistics').value = "false"; 
       } else {
         document.getElementById('editLogisticsContainer').style.display = "none";
       }
@@ -337,7 +343,6 @@
       document.getElementById('editModal').style.display = "none";
     }
 
-    // Phase 3: The Update Engine
     async function saveUpdate() {
       const btn = document.getElementById('btnUpdate');
       btn.textContent = "UPDATING...";
@@ -365,7 +370,7 @@
         
         if(result.status === "success") {
           closeModal();
-          fetchDashboardData(); // Refresh the table behind the scenes
+          fetchDashboardData(); 
         } else { throw new Error(); }
       } catch (err) {
         alert("Failed to update. Verify connection.");
@@ -382,7 +387,7 @@
       
       let dispatchText = "";
       if (document.getElementById("seedingType").value === "Store Invite") {
-        const venue = document.getElementById("storeVenue").value;
+        const venue = document.getElementById("storeVenue").value || "TBD";
         dispatchText = `Name: ${name}\nDate: ${date}\nTime: ${time}\nVenue: ${venue}`;
       } else {
         const phone = document.getElementById("logPhone").value || "TBD";
@@ -413,7 +418,9 @@
         if(result.status === "success") {
           document.getElementById('currentMonthDisplay').textContent = result.data.month;
           document.getElementById('valTotalSeeded').textContent = result.data.totalSeeded;
-          document.getElementById('valPendingDel').textContent = result.data.pendingDeliveries; // Updates the new dashboard
+          document.getElementById('valPendingDel').textContent = result.data.pendingDeliveries; 
+          document.getElementById('valToMin').textContent = result.data.remainingToMin;
+          document.getElementById('valToMax').textContent = result.data.remainingToMax;
 
           const tbody = document.getElementById('entriesTableBody');
           if (result.data.entries.length === 0) {
@@ -429,13 +436,15 @@
                  linkFormat = `<a href="${safeUrl}" target="_blank" class="kol-link">${entry.kol}</a>`;
               }
               
-              // Safely passing strings to the onclick handler
               const safeName = entry.kol.replace(/'/g, "\\'");
               const safeLink = entry.link ? entry.link.replace(/'/g, "\\'") : "";
 
+              // Labeling the date clearly based on seeding type
+              let dateLabel = entry.type === "Delivery" ? "Delivery Date" : "Visit Date";
+
               html += `<tr>
                         <td>${linkFormat}<br><span style="font-size:9px; color:var(--text-3);">${entry.type}</span></td>
-                        <td>${entry.date}</td>
+                        <td>${entry.date}<br><span style="font-size:9px; color:var(--text-3);">${dateLabel}</span></td>
                         <td>${badge}</td>
                         <td><button class="edit-btn" onclick="openEditModal('${entry.id}', '${safeName}', '${entry.type}', '${entry.date}', '${entry.handoff}', '${entry.content}', '${safeLink}')">Edit</button></td>
                        </tr>`;
@@ -459,7 +468,7 @@
 
       const type = document.getElementById("seedingType").value;
       const payload = {
-        action: "add", // Crucial for backend routing
+        action: "add", 
         kolName: document.getElementById("kolName").value,
         handleUrl: document.getElementById("handleUrl").value,
         seedingType: type,
@@ -467,7 +476,6 @@
         date: document.getElementById("logDate").value,
         time: document.getElementById("logTime").value,
         
-        // Dynamically assign based on type
         packageStr: type === "Store Invite" ? "N/A" : document.getElementById("productPackage").value,
         phone: type === "Store Invite" ? "N/A" : document.getElementById("logPhone").value,
         backupPhone: type === "Store Invite" ? "" : document.getElementById("backupPhone").value,
@@ -511,7 +519,6 @@
           });
           document.querySelectorAll('.cb-format').forEach(cb => cb.checked = false);
           
-          // Reset UI
           document.getElementById("seedingType").dispatchEvent(new Event("change"));
 
           setTimeout(() => {

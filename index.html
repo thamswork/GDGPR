@@ -42,7 +42,9 @@
     .btn-primary:active { transform: scale(0.98); }
     .btn-primary.success { background: var(--s-green); color: #fff; }
     .btn-secondary { background: var(--canvas); color: var(--navy); border: 1px solid var(--border); }
-    .btn-link { display: block; text-align: center; background: var(--canvas); color: var(--navy); border: 1px solid var(--border); padding: 12px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 11px; text-transform: uppercase; margin-bottom: 16px; }
+    
+    /* Utility Button for Forcing Logisitcs */
+    .btn-force { background: var(--canvas); color: var(--navy); border: 1px dashed var(--navy); padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; margin-bottom: 16px; }
 
     .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 0; }
     .checkbox-group label { font-size: 12px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
@@ -118,8 +120,6 @@
           </div>
         </div>
       </div>
-
-      <a href="https://docs.google.com/spreadsheets/d/1YkB3uAjI6VYAKYIfU6ofXVnDRFRZjj2_K6zsZ6t367Q/edit" target="_blank" class="btn-link">🚚 Open Logistics Sheet</a>
 
       <div class="admin-card">
         <div class="section-title">Database & Sync</div>
@@ -235,8 +235,10 @@
 
   <div id="editModal">
     <div class="modal-content">
-      <div class="section-title">Update Status: <span id="editName" style="color:var(--navy);"></span></div>
+      <div class="section-title" style="margin-bottom: 8px;">Update Status: <span id="editName" style="color:var(--navy);"></span></div>
       
+      <button id="forceSyncBtn" class="btn-force" onclick="forcePushLogistics()" style="display:none;">🚚 Force Sync to Logistics</button>
+
       <div class="form-grid">
         <div>
           <span class="input-label">Master: Handoff Status</span>
@@ -354,9 +356,11 @@
       
       if(type === "Delivery") {
         document.getElementById('editLogisticsContainer').style.display = "block";
+        document.getElementById('forceSyncBtn').style.display = "block";
         document.getElementById('editLogistics').value = "false"; 
       } else {
         document.getElementById('editLogisticsContainer').style.display = "none";
+        document.getElementById('forceSyncBtn').style.display = "none";
       }
       
       document.getElementById('editModal').style.display = "flex";
@@ -364,6 +368,35 @@
 
     function closeModal() {
       document.getElementById('editModal').style.display = "none";
+    }
+
+    async function forcePushLogistics() {
+      const btn = document.getElementById('forceSyncBtn');
+      btn.textContent = "SYNCING...";
+      btn.disabled = true;
+
+      const payload = { action: "force_logistics", id: activeEditId };
+
+      try {
+        const response = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "text/plain;charset=utf-8" }
+        });
+        const result = await response.json();
+        
+        if(result.status === "success") {
+          btn.textContent = "✓ PUSHED TO LOGISTICS SHEET";
+          setTimeout(() => {
+            btn.textContent = "🚚 Force Sync to Logistics";
+            btn.disabled = false;
+          }, 3000);
+        } else { throw new Error(); }
+      } catch (err) {
+        alert("Failed to force sync. Verify deployment version.");
+        btn.textContent = "🚚 Force Sync to Logistics";
+        btn.disabled = false;
+      }
     }
 
     async function saveUpdate() {
@@ -396,7 +429,7 @@
           fetchDashboardData(); 
         } else { throw new Error(); }
       } catch (err) {
-        alert("Failed to update. Verify connection.");
+        alert("Failed to update. Verify deployment version.");
       }
       
       btn.textContent = "Save Changes";
@@ -445,7 +478,6 @@
           document.getElementById('valToMin').textContent = result.data.remainingToMin;
           document.getElementById('valToMax').textContent = result.data.remainingToMax;
 
-          // Populate Dynamic Package Dropdown
           if (result.data.packages && result.data.packages.length > 0) {
             const select = document.getElementById("productPackageSelect");
             select.innerHTML = '<option value="">Select a package...</option>';
@@ -463,7 +495,6 @@
             result.data.entries.forEach(entry => {
               let badge = entry.handoff === "Pending" ? `<span class="badge-pending">Pending</span>` : `<span class="badge-done">Done</span>`;
               
-              // Clean Handle Redesign
               let handleText = "";
               if (entry.url && entry.url !== "" && entry.url !== "TBD") {
                  let displayUrl = entry.url.replace("https://", "").replace("http://", "").replace("instagram.com/", "@");

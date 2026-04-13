@@ -32,6 +32,7 @@
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     
     .input-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .input-label span.optional { color: #a1a1aa; font-weight: 500; font-size: 9px; }
     .input-box { width: 100%; height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--canvas); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; outline: none; transition: 0.15s; -webkit-appearance: none; }
     .input-box:focus { border-color: var(--navy); background: var(--surface); }
     textarea.input-box { height: 80px; padding: 12px; resize: none; }
@@ -157,7 +158,7 @@
           
           <div id="packageContainer">
             <span class="input-label">Product Package</span>
-            <input type="text" id="productPackage" class="input-box" placeholder="e.g. GDG Premium Box, 2x Ice Cream Pints">
+            <input type="text" id="productPackage" class="input-box" placeholder="e.g. GDG Premium Box, 2x Pints">
           </div>
 
           <div class="form-grid-2">
@@ -171,19 +172,32 @@
             </div>
           </div>
           
-          <div id="phoneContainer">
-            <span class="input-label">Phone Number</span>
-            <input type="tel" id="logPhone" class="input-box" placeholder="08X-XXX-XXXX">
+          <div id="deliveryFields">
+            <div class="form-grid-2" style="margin-bottom: 16px;">
+              <div>
+                <span class="input-label">Phone Number</span>
+                <input type="tel" id="logPhone" class="input-box" placeholder="08X-XXX-XXXX">
+              </div>
+              <div>
+                <span class="input-label">Backup Phone <span class="optional">(Optional)</span></span>
+                <input type="tel" id="backupPhone" class="input-box" placeholder="Alternative Number">
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <span class="input-label">Address / Venue Details</span>
+              <textarea id="logAddress" class="input-box" placeholder="Full delivery address"></textarea>
+            </div>
+
+            <div>
+              <span class="input-label">Google Map Link <span class="optional">(Optional)</span></span>
+              <input type="text" id="googleMap" class="input-box" placeholder="goo.gl/maps/...">
+            </div>
           </div>
           
-          <div id="addressContainer">
-            <span class="input-label">Address / Venue Details</span>
-            <textarea id="logAddress" class="input-box" placeholder="Full address or Store Name"></textarea>
-          </div>
-          
-          <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <div style="display: flex; gap: 10px; margin-top: 12px;">
             <button class="btn-primary" id="btnSubmit" style="flex: 2;" onclick="submitData()">Log Data</button>
-            <button class="btn-primary btn-secondary" id="btnCopy" style="flex: 1;" onclick="copyDispatchText()">📋 Copy Logistics</button>
+            <button class="btn-primary btn-secondary" id="btnCopy" style="flex: 1;" onclick="copyDispatchText()">📋 Copy</button>
           </div>
         </div>
       </div>
@@ -192,7 +206,6 @@
   </div>
 
   <script>
-    // URL HAS BEEN FULLY INJECTED HERE
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyAkmEqNUiJU4zPa_MfxPIYEvPki3vaFewaYVfuc88NzJg9Nj7JB1CUXPHScb250vaQEA/exec";
 
     window.onload = function() {
@@ -203,21 +216,20 @@
     document.getElementById("seedingType").addEventListener("change", function() {
       const type = this.value;
       const pkgContainer = document.getElementById("packageContainer");
-      const phoneContainer = document.getElementById("phoneContainer");
-      const addressContainer = document.getElementById("addressContainer");
+      const deliveryFields = document.getElementById("deliveryFields");
       
       if(type === "Store Invite") {
         pkgContainer.style.display = "none";
-        phoneContainer.style.display = "none";
-        addressContainer.style.display = "none";
+        deliveryFields.style.display = "none";
         
         document.getElementById("productPackage").value = "N/A";
         document.getElementById("logPhone").value = "N/A";
+        document.getElementById("backupPhone").value = "";
+        document.getElementById("googleMap").value = "";
         document.getElementById("logAddress").value = "Store Visit";
       } else {
         pkgContainer.style.display = "block";
-        phoneContainer.style.display = "block";
-        addressContainer.style.display = "block";
+        deliveryFields.style.display = "block";
         
         document.getElementById("productPackage").value = ""; 
         if(document.getElementById("logPhone").value === "N/A") document.getElementById("logPhone").value = ""; 
@@ -243,22 +255,24 @@
     function copyDispatchText() {
       const name = document.getElementById("kolName").value || "TBD";
       const phone = document.getElementById("logPhone").value || "TBD";
+      const backup = document.getElementById("backupPhone").value || "";
       const pkg = document.getElementById("productPackage").value || "N/A";
       const date = document.getElementById("logDate").value || "TBD";
       const time = document.getElementById("logTime").value || "TBD";
       const address = document.getElementById("logAddress").value || "TBD";
+      const mapLink = document.getElementById("googleMap").value || "";
       
       let dispatchText = "";
       if (document.getElementById("seedingType").value === "Store Invite") {
         dispatchText = `Name: ${name}\nDate: ${date}\nTime: ${time}\nVenue: GDG`;
       } else {
-        dispatchText = `Name: ${name}\nPhone: ${phone}\nPackage: ${pkg}\nDate: ${date}\nTime: ${time}\nAddress: ${address}`;
+        dispatchText = `Name: ${name}\nPhone: ${phone} ${backup ? '(Backup: ' + backup + ')' : ''}\nPackage: ${pkg}\nDate: ${date}\nTime: ${time}\nAddress: ${address}\nMap: ${mapLink}`;
       }
       
       navigator.clipboard.writeText(dispatchText).then(() => {
         const btn = document.getElementById("btnCopy");
         btn.textContent = "✓ COPIED";
-        setTimeout(() => { btn.textContent = "📋 Copy Logistics"; }, 2000);
+        setTimeout(() => { btn.textContent = "📋 Copy"; }, 2000);
       }).catch(err => {
         alert("Failed to copy. Please check browser permissions.");
       });
@@ -305,8 +319,7 @@
             throw new Error(result.message || "Unknown error from server");
         }
       } catch (error) {
-        console.error(error);
-        document.getElementById('entriesTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting. Please check if "Who has access" is set to "Anyone" in Google Sheets.</td></tr>`;
+        document.getElementById('entriesTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting. Please check deployment settings.</td></tr>`;
       }
       btn.textContent = "↻ Refresh Live Data";
     }
@@ -328,7 +341,9 @@
         date: document.getElementById("logDate").value,
         time: document.getElementById("logTime").value,
         phone: document.getElementById("logPhone").value,
-        address: document.getElementById("logAddress").value
+        backupPhone: document.getElementById("backupPhone").value || "",
+        address: document.getElementById("logAddress").value,
+        googleMap: document.getElementById("googleMap").value || ""
       };
 
       if (payload.seedingType === "Delivery") {
@@ -357,7 +372,13 @@
         const result = await response.json();
         
         if(result.status === "success") {
-          btn.textContent = "✓ LOGGED";
+          
+          // Provide specific feedback based on routing
+          if (result.type === "BOTH") {
+            btn.textContent = "✓ SAVED TO MASTER & LOGISTICS";
+          } else {
+            btn.textContent = "✓ SAVED TO MASTER ONLY";
+          }
           btn.classList.add("success");
           
           document.querySelectorAll('.input-box').forEach(input => {
@@ -365,7 +386,6 @@
           });
           document.querySelectorAll('.cb-format').forEach(cb => cb.checked = false);
           
-          // Reset hidden fields just in case
           if (document.getElementById("seedingType").value === "Store Invite") {
              document.getElementById("productPackage").value = "N/A";
              document.getElementById("logPhone").value = "N/A";
@@ -377,8 +397,8 @@
             btn.classList.remove("success");
             btn.style.opacity = "1";
             btn.disabled = false;
-            fetchDashboardData(); // Instantly update the dashboard tab!
-          }, 2000);
+            fetchDashboardData(); 
+          }, 3000); // Held a little longer so they can read the feedback
         }
       } catch (error) {
         alert("Submission sent. Verify in Google Sheets.");

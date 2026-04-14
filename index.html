@@ -64,6 +64,13 @@
 
     #editModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
     .modal-content { background: var(--surface); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+
+    /* DEBUGGER STYLES */
+    .debug-panel { background: #121212; font-family: monospace; font-size: 10px; padding: 12px; border-radius: 8px; max-height: 250px; overflow-y: auto; word-break: break-all; margin-top: 10px; }
+    .log-info { color: #aaaaaa; border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px; }
+    .log-send { color: #5bc0de; border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px; }
+    .log-recv { color: #5cb85c; border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px; }
+    .log-err { color: #d9534f; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px; }
   </style>
 </head>
 <body>
@@ -138,6 +145,14 @@
           </table>
         </div>
         <button class="btn-primary btn-secondary" id="btnRefresh" style="margin-top: 16px;" onclick="fetchDashboardData()">↻ Refresh Live Data</button>
+      </div>
+
+      <div class="admin-card" style="background: #000; border-color: #333;">
+        <div class="section-title" style="color: #fff; border-color: #333;">System Debug Log</div>
+        <div id="debugLog" class="debug-panel">
+          <div class="log-info">System ready. Waiting for action...</div>
+        </div>
+        <button class="btn-secondary" style="width:100%; margin-top:10px; font-size: 10px; padding: 6px;" onclick="document.getElementById('debugLog').innerHTML = '';">Clear Log</button>
       </div>
     </div>
 
@@ -287,6 +302,20 @@
     let activeEditDate = null;
     let activeEditName = null;
 
+    // --- DEBUG LOGGER ---
+    function logToTerminal(message, type = "info") {
+      const logDiv = document.getElementById("debugLog");
+      const time = new Date().toLocaleTimeString();
+      let colorClass = "log-info";
+      
+      if (type === "send") colorClass = "log-send";
+      if (type === "recv") colorClass = "log-recv";
+      if (type === "error") colorClass = "log-err";
+
+      const logEntry = `<div class="${colorClass}">[${time}] ${message}</div>`;
+      logDiv.innerHTML = logEntry + logDiv.innerHTML;
+    }
+
     window.onload = function() {
       fetchDashboardData();
     };
@@ -369,30 +398,37 @@
       document.getElementById('editModal').style.display = "none";
     }
 
-    // THIS IS THE CRITICAL FUNCTION THAT WAS MISSING HEADERS
+    // THE EXECUTION ENGINE (NOW WITH FULL LOGGING)
     async function executePayload(payload, buttonId, successText, defaultText) {
       const btn = document.getElementById(buttonId);
       btn.textContent = "UPDATING...";
       btn.disabled = true;
 
+      logToTerminal(`Sending POST request: Action -> ${payload.action}`, "send");
+      logToTerminal(`Payload data: ${JSON.stringify(payload)}`, "info");
+
       try {
         const response = await fetch(GAS_URL, {
           method: "POST",
           body: JSON.stringify(payload),
-          headers: { "Content-Type": "text/plain;charset=utf-8" }, // THIS PREVENTS GOOGLE FROM BLOCKING IT
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           redirect: "follow"
         });
         
         const text = await response.text();
+        logToTerminal(`Raw Response from Google: ${text}`, "recv");
+
         let result;
         try {
            result = JSON.parse(text);
         } catch(e) {
-           alert("Database Error: " + text);
+           logToTerminal(`CRITICAL ERROR: Google did not return JSON. (Usually means a script crash or bad URL)`, "error");
            throw new Error("Parse Fail");
         }
         
         if(result.status === "success") {
+          logToTerminal(`SUCCESS! Operation completed properly.`, "recv");
+          
           if(buttonId === "btnSubmit" && result.type === "BOTH") {
              btn.textContent = "✓ SAVED TO MASTER & LOGISTICS";
           } else {
@@ -419,12 +455,16 @@
             btn.disabled = false;
           }, 3000);
         } else { 
-           alert("Server Error: " + result.message);
+           logToTerminal(`API ERROR RETURNED: ${result.message}`, "error");
            throw new Error(result.message); 
         }
       } catch (err) {
-        btn.textContent = defaultText;
-        btn.disabled = false;
+        logToTerminal(`FAILED TO CONNECT: ${err.message}`, "error");
+        btn.textContent = "❌ ERROR";
+        setTimeout(() => {
+           btn.textContent = defaultText;
+           btn.disabled = false;
+        }, 3000);
       }
     }
 
@@ -471,50 +511,15 @@
         googleMap: type === "Store Invite" ? "" : document.getElementById("googleMap").value
       };
 
-      if (payload.seedingType === "Delivery") {
-        if(!payload.kolName || !payload.date || !payload.address || !payload.phone || !payload.packageStr) {
-          alert("For Deliveries: Please fill in the KOL Name, Package, Phone, Date, and Address.");
-          return;
-        }
-      } else {
-        if(!payload.kolName || !payload.date) {
-          alert("For Store Invites: Please fill in at least the KOL Name and Date.");
-          return;
-        }
-      }
-
-      executePayload(payload, 'btnSubmit', "✓ SAVED TO MASTER", "LOG DATA");
-    }
-
-    function copyDispatchText() {
-      const name = document.getElementById("kolName").value || "TBD";
-      const date = document.getElementById("logDate").value || "TBD";
-      const time = document.getElementById("logTime").value || "TBD";
-      
-      let dispatchText = "";
-      if (document.getElementById("seedingType").value === "Store Invite") {
-        const venue = document.getElementById("storeVenue").value || "TBD";
-        dispatchText = `Name: ${name}\nDate: ${date}\nTime: ${time}\nVenue: ${venue}`;
-      } else {
-        const phone = document.getElementById("logPhone").value || "TBD";
-        const backup = document.getElementById("backupPhone").value || "";
-        const pkg = getFinalPackageStr() || "N/A";
-        const address = document.getElementById("logAddress").value || "TBD";
-        const mapLink = document.getElementById("googleMap").value || "";
-        dispatchText = `Name: ${name}\nPhone: ${phone} ${backup ? '(Backup: ' + backup + ')' : ''}\nPackage: ${pkg}\nDate: ${date}\nTime: ${time}\nAddress: ${address}\nMap: ${mapLink}`;
-      }
-      
-      navigator.clipboard.writeText(dispatchText).then(() => {
-        const btn = document.getElementById("btnCopy");
-        btn.textContent = "✓ COPIED";
-        setTimeout(() => { btn.textContent = "📋 Copy"; }, 2000);
-      });
+      executePayload(payload, 'btnSubmit', "✓ SAVED", "LOG DATA");
     }
 
     async function fetchDashboardData() {
       const btn = document.getElementById("btnRefresh");
       btn.textContent = "↻ Fetching...";
       
+      logToTerminal(`Fetching Live Data (GET)...`, "send");
+
       try {
         const cacheBusterUrl = GAS_URL + "?t=" + new Date().getTime();
         const response = await fetch(cacheBusterUrl, { redirect: "follow" });
@@ -524,10 +529,13 @@
         try {
            result = JSON.parse(text);
         } catch(e) {
-           throw new Error("Invalid response from server. Check script deployment settings.");
+           logToTerminal(`GET ERROR: Did not return JSON. Output was: ${text.substring(0,50)}...`, "error");
+           throw new Error("Invalid response from server.");
         }
         
         if(result.status === "success") {
+          logToTerminal(`GET SUCCESS: Loaded ${result.data.entries.length} entries.`, "recv");
+          
           document.getElementById('currentMonthDisplay').textContent = result.data.month;
           document.getElementById('valTotalSeeded').textContent = result.data.totalSeeded;
           document.getElementById('valPendingDel').textContent = result.data.pendingDeliveries; 
@@ -571,6 +579,7 @@
             tbody.innerHTML = html;
           }
         } else {
+           logToTerminal(`GET API ERROR: ${result.message}`, "error");
            throw new Error(result.message);
         }
       } catch (error) {

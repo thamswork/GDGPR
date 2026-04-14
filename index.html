@@ -43,7 +43,6 @@
     .btn-primary.success { background: var(--s-green); color: #fff; }
     .btn-secondary { background: var(--canvas); color: var(--navy); border: 1px solid var(--border); }
     
-    /* The Force Sync Button Style */
     .btn-force { background: var(--canvas); color: var(--navy); border: 1px dashed var(--navy); padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; margin-bottom: 16px; }
 
     .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 0; }
@@ -354,14 +353,13 @@
       document.getElementById('editContent').value = content || "Pending";
       document.getElementById('editDrive').value = link || "";
       
-      // BULLETPROOF: Added trim() to ensure invisible spaces don't break the Delivery match
       if(String(type).trim() === "Delivery") {
         document.getElementById('editLogisticsContainer').style.display = "block";
-        document.getElementById('forceSyncBtn').style.display = "block"; // This shows the button
+        document.getElementById('forceSyncBtn').style.display = "block"; 
         document.getElementById('editLogistics').value = "false"; 
       } else {
         document.getElementById('editLogisticsContainer').style.display = "none";
-        document.getElementById('forceSyncBtn').style.display = "none"; // This hides it for Store Invites
+        document.getElementById('forceSyncBtn').style.display = "none"; 
       }
       
       document.getElementById('editModal').style.display = "flex";
@@ -371,40 +369,69 @@
       document.getElementById('editModal').style.display = "none";
     }
 
-    async function forcePushLogistics() {
-      const btn = document.getElementById('forceSyncBtn');
-      btn.textContent = "SYNCING...";
+    // Fail-safe fetch handling to stop the "STUCK ON UPDATING" bug
+    async function executePayload(payload, buttonId, successText, defaultText) {
+      const btn = document.getElementById(buttonId);
+      btn.textContent = "UPDATING...";
       btn.disabled = true;
-
-      const payload = { action: "force_logistics", id: activeEditId };
 
       try {
         const response = await fetch(GAS_URL, {
           method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "text/plain;charset=utf-8" }
+          body: JSON.stringify(payload)
         });
-        const result = await response.json();
+        
+        const text = await response.text();
+        let result;
+        try {
+           result = JSON.parse(text);
+        } catch(e) {
+           alert("Database Error: " + text);
+           throw new Error("Parse Fail");
+        }
         
         if(result.status === "success") {
-          btn.textContent = "✓ PUSHED TO LOGISTICS SHEET";
+          if(buttonId === "btnSubmit" && result.type === "BOTH") {
+             btn.textContent = "✓ SAVED TO MASTER & LOGISTICS";
+          } else {
+             btn.textContent = successText;
+          }
+          btn.classList.add("success");
+
+          if(buttonId === "btnUpdate") {
+             closeModal();
+          } else if(buttonId === "btnSubmit") {
+            document.querySelectorAll('.input-box').forEach(input => {
+              if(input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') input.value = '';
+            });
+            document.querySelectorAll('.cb-format').forEach(cb => cb.checked = false);
+            document.getElementById("seedingType").dispatchEvent(new Event("change"));
+            document.getElementById("productPackageOther").style.display = "none";
+          }
+          
+          fetchDashboardData(); 
+
           setTimeout(() => {
-            btn.textContent = "🚚 Force Sync to Logistics";
+            btn.textContent = defaultText;
+            btn.classList.remove("success");
             btn.disabled = false;
           }, 3000);
-        } else { throw new Error(); }
+        } else { 
+           alert("Server Error: " + result.message);
+           throw new Error(); 
+        }
       } catch (err) {
-        alert("Failed to force sync. Did you select 'New version' during deployment?");
-        btn.textContent = "🚚 Force Sync to Logistics";
+        btn.textContent = defaultText;
         btn.disabled = false;
       }
     }
 
-    async function saveUpdate() {
-      const btn = document.getElementById('btnUpdate');
-      btn.textContent = "UPDATING...";
-      btn.disabled = true;
+    function forcePushLogistics() {
+      const payload = { action: "force_logistics", id: activeEditId };
+      executePayload(payload, 'forceSyncBtn', "✓ PUSHED TO LOGISTICS SHEET", "🚚 Force Sync to Logistics");
+    }
 
+    function saveUpdate() {
       const payload = {
         action: "update",
         id: activeEditId,
@@ -416,25 +443,45 @@
         driveLink: document.getElementById('editDrive').value,
         logisticsDone: document.getElementById('editLogistics').value === "true"
       };
+      executePayload(payload, 'btnUpdate', "✓ SAVED", "Save Changes");
+    }
 
-      try {
-        const response = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "text/plain;charset=utf-8" }
-        });
-        const result = await response.json();
+    function submitData() {
+      const checkboxes = document.querySelectorAll('.cb-format:checked');
+      let formats = [];
+      checkboxes.forEach((cb) => { formats.push(cb.value); });
+      const formatString = formats.join(", ");
+
+      const type = document.getElementById("seedingType").value;
+      const payload = {
+        action: "add", 
+        kolName: document.getElementById("kolName").value,
+        handleUrl: document.getElementById("handleUrl").value,
+        seedingType: type,
+        deliverable: formatString,
+        date: document.getElementById("logDate").value,
+        time: document.getElementById("logTime").value,
         
-        if(result.status === "success") {
-          closeModal();
-          fetchDashboardData(); 
-        } else { throw new Error(); }
-      } catch (err) {
-        alert("Failed to update. Did you select 'New version' during deployment?");
+        packageStr: type === "Store Invite" ? "N/A" : getFinalPackageStr(),
+        phone: type === "Store Invite" ? "N/A" : document.getElementById("logPhone").value,
+        backupPhone: type === "Store Invite" ? "" : document.getElementById("backupPhone").value,
+        address: type === "Store Invite" ? document.getElementById("storeVenue").value : document.getElementById("logAddress").value,
+        googleMap: type === "Store Invite" ? "" : document.getElementById("googleMap").value
+      };
+
+      if (payload.seedingType === "Delivery") {
+        if(!payload.kolName || !payload.date || !payload.address || !payload.phone || !payload.packageStr) {
+          alert("For Deliveries: Please fill in the KOL Name, Package, Phone, Date, and Address.");
+          return;
+        }
+      } else {
+        if(!payload.kolName || !payload.date) {
+          alert("For Store Invites: Please fill in at least the KOL Name and Date.");
+          return;
+        }
       }
-      
-      btn.textContent = "Save Changes";
-      btn.disabled = false;
+
+      executePayload(payload, 'btnSubmit', "✓ SAVED TO MASTER", "LOG DATA");
     }
 
     function copyDispatchText() {
@@ -459,8 +506,6 @@
         const btn = document.getElementById("btnCopy");
         btn.textContent = "✓ COPIED";
         setTimeout(() => { btn.textContent = "📋 Copy"; }, 2000);
-      }).catch(err => {
-        alert("Failed to copy.");
       });
     }
 
@@ -469,7 +514,6 @@
       btn.textContent = "↻ Fetching...";
       
       try {
-        // Appending a random number to force the browser to bypass its cache
         const cacheBusterUrl = GAS_URL + "?t=" + new Date().getTime();
         const response = await fetch(cacheBusterUrl, { redirect: "follow" });
         const result = await response.json();
@@ -522,86 +566,6 @@
         document.getElementById('entriesTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--red);">Error connecting.</td></tr>`;
       }
       btn.textContent = "↻ Refresh Live Data";
-    }
-
-    async function submitData() {
-      const btn = document.getElementById("btnSubmit");
-      
-      const checkboxes = document.querySelectorAll('.cb-format:checked');
-      let formats = [];
-      checkboxes.forEach((cb) => { formats.push(cb.value); });
-      const formatString = formats.join(", ");
-
-      const type = document.getElementById("seedingType").value;
-      const payload = {
-        action: "add", 
-        kolName: document.getElementById("kolName").value,
-        handleUrl: document.getElementById("handleUrl").value,
-        seedingType: type,
-        deliverable: formatString,
-        date: document.getElementById("logDate").value,
-        time: document.getElementById("logTime").value,
-        
-        packageStr: type === "Store Invite" ? "N/A" : getFinalPackageStr(),
-        phone: type === "Store Invite" ? "N/A" : document.getElementById("logPhone").value,
-        backupPhone: type === "Store Invite" ? "" : document.getElementById("backupPhone").value,
-        address: type === "Store Invite" ? document.getElementById("storeVenue").value : document.getElementById("logAddress").value,
-        googleMap: type === "Store Invite" ? "" : document.getElementById("googleMap").value
-      };
-
-      if (payload.seedingType === "Delivery") {
-        if(!payload.kolName || !payload.date || !payload.address || !payload.phone || !payload.packageStr) {
-          alert("For Deliveries: Please fill in the KOL Name, Package, Phone, Date, and Address.");
-          return;
-        }
-      } else {
-        if(!payload.kolName || !payload.date) {
-          alert("For Store Invites: Please fill in at least the KOL Name and Date.");
-          return;
-        }
-      }
-
-      btn.textContent = "SENDING...";
-      btn.style.opacity = "0.7";
-      btn.disabled = true;
-
-      try {
-        const response = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "text/plain;charset=utf-8" }
-        });
-        
-        const result = await response.json();
-        
-        if(result.status === "success") {
-          if (result.type === "BOTH") btn.textContent = "✓ SAVED TO MASTER & LOGISTICS";
-          else btn.textContent = "✓ SAVED TO MASTER";
-          
-          btn.classList.add("success");
-          
-          document.querySelectorAll('.input-box').forEach(input => {
-            if(input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') input.value = '';
-          });
-          document.querySelectorAll('.cb-format').forEach(cb => cb.checked = false);
-          
-          document.getElementById("seedingType").dispatchEvent(new Event("change"));
-          document.getElementById("productPackageOther").style.display = "none";
-
-          setTimeout(() => {
-            btn.textContent = "LOG DATA";
-            btn.classList.remove("success");
-            btn.style.opacity = "1";
-            btn.disabled = false;
-            fetchDashboardData(); 
-          }, 3000);
-        }
-      } catch (error) {
-        alert("Submission sent. Verify in Google Sheets.");
-        btn.textContent = "LOG DATA";
-        btn.style.opacity = "1";
-        btn.disabled = false;
-      }
     }
   </script>
 </body>

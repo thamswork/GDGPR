@@ -369,6 +369,7 @@
       document.getElementById('editModal').style.display = "none";
     }
 
+    // THIS IS THE CRITICAL FUNCTION THAT WAS MISSING HEADERS
     async function executePayload(payload, buttonId, successText, defaultText) {
       const btn = document.getElementById(buttonId);
       btn.textContent = "UPDATING...";
@@ -377,7 +378,9 @@
       try {
         const response = await fetch(GAS_URL, {
           method: "POST",
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "text/plain;charset=utf-8" }, // THIS PREVENTS GOOGLE FROM BLOCKING IT
+          redirect: "follow"
         });
         
         const text = await response.text();
@@ -513,7 +516,6 @@
       btn.textContent = "↻ Fetching...";
       
       try {
-        // Appending timestamp prevents aggressive Mac/iOS caching
         const cacheBusterUrl = GAS_URL + "?t=" + new Date().getTime();
         const response = await fetch(cacheBusterUrl, { redirect: "follow" });
         const text = await response.text();

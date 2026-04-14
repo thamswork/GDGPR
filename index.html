@@ -514,8 +514,8 @@
       btn.textContent = "↻ Fetching...";
       
       try {
-        const cacheBusterUrl = GAS_URL + "?t=" + new Date().getTime();
-        const response = await fetch(cacheBusterUrl, { redirect: "follow" });
+        // Optimized for speed: No cache buster, relies on manual refresh via the UI button
+        const response = await fetch(GAS_URL, { redirect: "follow" });
         const result = await response.json();
         
         if(result.status === "success") {

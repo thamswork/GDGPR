@@ -65,8 +65,8 @@
     #editModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
     .modal-content { background: var(--surface); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 
-    /* DEBUGGER STYLES */
-    .debug-panel { background: #121212; font-family: monospace; font-size: 10px; padding: 12px; border-radius: 8px; max-height: 250px; overflow-y: auto; word-break: break-all; margin-top: 10px; }
+    /* SUBTLE DEBUGGER STYLES */
+    .debug-panel { font-family: monospace; font-size: 10px; overflow-y: auto; word-break: break-all; }
     .log-info { color: #aaaaaa; border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px; }
     .log-send { color: #5bc0de; border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px; }
     .log-recv { color: #5cb85c; border-bottom: 1px solid #333; padding-bottom: 4px; margin-bottom: 4px; }
@@ -145,14 +145,6 @@
           </table>
         </div>
         <button class="btn-primary btn-secondary" id="btnRefresh" style="margin-top: 16px;" onclick="fetchDashboardData()">↻ Refresh Live Data</button>
-      </div>
-
-      <div class="admin-card" style="background: #000; border-color: #333;">
-        <div class="section-title" style="color: #fff; border-color: #333;">System Debug Log</div>
-        <div id="debugLog" class="debug-panel">
-          <div class="log-info">System ready. Waiting for action...</div>
-        </div>
-        <button class="btn-secondary" style="width:100%; margin-top:10px; font-size: 10px; padding: 6px;" onclick="document.getElementById('debugLog').innerHTML = '';">Clear Log</button>
       </div>
     </div>
 
@@ -294,6 +286,21 @@
     </div>
   </div>
 
+  <div style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
+    <button onclick="document.getElementById('debugPanel').style.display='block'" style="background: rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.1); border-radius: 4px; font-size:9px; padding: 4px 8px; color: var(--navy); cursor:pointer; font-weight: bold;">System Log</button>
+  </div>
+  
+  <div id="debugPanel" style="display:none; position: fixed; bottom: 40px; right: 10px; width: 300px; background: #121212; padding: 12px; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+      <div style="display:flex; justify-content: space-between; align-items:center; border-bottom: 1px solid #333; padding-bottom:6px; margin-bottom:6px;">
+         <span style="color:#fff; font-size:10px; font-weight:bold;">SYSTEM DIAGNOSTICS</span>
+         <button onclick="document.getElementById('debugPanel').style.display='none'" style="background:none; border:none; color:#aaa; font-size:14px; cursor:pointer;">×</button>
+      </div>
+      <div id="debugLog" class="debug-panel" style="max-height: 150px; margin-top:0;">
+        <div class="log-info">System ready...</div>
+      </div>
+      <button style="width:100%; margin-top:8px; font-size:9px; padding:4px; background:#333; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="document.getElementById('debugLog').innerHTML = '';">Clear</button>
+  </div>
+
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyAkmEqNUiJU4zPa_MfxPIYEvPki3vaFewaYVfuc88NzJg9Nj7JB1CUXPHScb250vaQEA/exec";
 
@@ -302,7 +309,6 @@
     let activeEditDate = null;
     let activeEditName = null;
 
-    // --- DEBUG LOGGER ---
     function logToTerminal(message, type = "info") {
       const logDiv = document.getElementById("debugLog");
       const time = new Date().toLocaleTimeString();
@@ -398,14 +404,12 @@
       document.getElementById('editModal').style.display = "none";
     }
 
-    // THE EXECUTION ENGINE (NOW WITH FULL LOGGING)
     async function executePayload(payload, buttonId, successText, defaultText) {
       const btn = document.getElementById(buttonId);
       btn.textContent = "UPDATING...";
       btn.disabled = true;
 
-      logToTerminal(`Sending POST request: Action -> ${payload.action}`, "send");
-      logToTerminal(`Payload data: ${JSON.stringify(payload)}`, "info");
+      logToTerminal(`Sending Action -> ${payload.action}`, "send");
 
       try {
         const response = await fetch(GAS_URL, {
@@ -416,18 +420,18 @@
         });
         
         const text = await response.text();
-        logToTerminal(`Raw Response from Google: ${text}`, "recv");
+        logToTerminal(`Raw Server Response: ${text}`, "recv");
 
         let result;
         try {
            result = JSON.parse(text);
         } catch(e) {
-           logToTerminal(`CRITICAL ERROR: Google did not return JSON. (Usually means a script crash or bad URL)`, "error");
+           logToTerminal(`CRITICAL ERROR: Google blocked request or script crashed.`, "error");
            throw new Error("Parse Fail");
         }
         
         if(result.status === "success") {
-          logToTerminal(`SUCCESS! Operation completed properly.`, "recv");
+          logToTerminal(`SUCCESS: Data saved.`, "recv");
           
           if(buttonId === "btnSubmit" && result.type === "BOTH") {
              btn.textContent = "✓ SAVED TO MASTER & LOGISTICS";
@@ -455,7 +459,7 @@
             btn.disabled = false;
           }, 3000);
         } else { 
-           logToTerminal(`API ERROR RETURNED: ${result.message}`, "error");
+           logToTerminal(`API ERROR: ${result.message}`, "error");
            throw new Error(result.message); 
         }
       } catch (err) {

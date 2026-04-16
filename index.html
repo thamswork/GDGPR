@@ -59,6 +59,7 @@
     
     .badge-pending { background: var(--s-amber-bg); color: var(--s-amber); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
     .badge-done { background: var(--s-green-bg); color: var(--s-green); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
+    
     .edit-btn { background: var(--canvas); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.2s;}
     .edit-btn:hover { background: var(--navy); color: white;}
 
@@ -309,6 +310,9 @@
     let activeEditDate = null;
     let activeEditName = null;
 
+    // GLOBAL MEMORY FOR QUICK COPYING
+    let globalEntriesData = [];
+
     function logToTerminal(message, type = "info") {
       const logDiv = document.getElementById("debugLog");
       const time = new Date().toLocaleTimeString();
@@ -518,6 +522,60 @@
       executePayload(payload, 'btnSubmit', "✓ SAVED", "LOG DATA");
     }
 
+    // THE QUICK COPY FUNCTION FOR THE DASHBOARD
+    function copyFromDashboard(id) {
+      const entry = globalEntriesData.find(e => e.id === id);
+      if (entry) {
+        let textToCopy = entry.dispatchText;
+        if (!textToCopy || textToCopy.trim() === "") {
+           textToCopy = `Name: ${entry.kol}\nDate: ${entry.date}\nType: ${entry.type}`;
+        }
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const btn = document.getElementById("btnCopy_" + id);
+          btn.textContent = "✓ Copied";
+          btn.style.background = "var(--s-green)";
+          btn.style.color = "white";
+          btn.style.borderColor = "var(--s-green)";
+          
+          setTimeout(() => {
+            btn.textContent = "Copy";
+            btn.style.background = "var(--canvas)";
+            btn.style.color = "var(--navy)";
+            btn.style.borderColor = "var(--border)";
+          }, 2000);
+        }).catch(err => {
+          alert("Could not copy to clipboard. Please check permissions.");
+        });
+      }
+    }
+
+    // THE ORIGINAL COPY BUTTON ON DATA ENTRY TAB
+    function copyDispatchText() {
+      const name = document.getElementById("kolName").value || "TBD";
+      const date = document.getElementById("logDate").value || "TBD";
+      const time = document.getElementById("logTime").value || "TBD";
+      
+      let dispatchText = "";
+      if (document.getElementById("seedingType").value === "Store Invite") {
+        const venue = document.getElementById("storeVenue").value || "TBD";
+        dispatchText = `Name: ${name}\nDate: ${date}\nTime: ${time}\nVenue: ${venue}`;
+      } else {
+        const phone = document.getElementById("logPhone").value || "TBD";
+        const backup = document.getElementById("backupPhone").value || "";
+        const pkg = getFinalPackageStr() || "N/A";
+        const address = document.getElementById("logAddress").value || "TBD";
+        const mapLink = document.getElementById("googleMap").value || "";
+        dispatchText = `Name: ${name}\nPhone: ${phone} ${backup ? '(Backup: ' + backup + ')' : ''}\nPackage: ${pkg}\nDate: ${date}\nTime: ${time}\nAddress: ${address}\nMap: ${mapLink}`;
+      }
+      
+      navigator.clipboard.writeText(dispatchText).then(() => {
+        const btn = document.getElementById("btnCopy");
+        btn.textContent = "✓ COPIED";
+        setTimeout(() => { btn.textContent = "📋 Copy"; }, 2000);
+      });
+    }
+
     async function fetchDashboardData() {
       const btn = document.getElementById("btnRefresh");
       btn.textContent = "↻ Fetching...";
@@ -540,6 +598,9 @@
         if(result.status === "success") {
           logToTerminal(`GET SUCCESS: Loaded ${result.data.entries.length} entries.`, "recv");
           
+          // STORE DATA IN GLOBAL MEMORY FOR THE COPY BUTTON
+          globalEntriesData = result.data.entries;
+
           document.getElementById('currentMonthDisplay').textContent = result.data.month;
           document.getElementById('valTotalSeeded').textContent = result.data.totalSeeded;
           document.getElementById('valPendingDel').textContent = result.data.pendingDeliveries; 
@@ -577,7 +638,12 @@
                         <td><span style="font-weight: 700;">${entry.kol}</span>${handleText}<br><span style="font-size:9px; color:var(--text-3);">${entry.type}</span></td>
                         <td>${entry.date}<br><span style="font-size:9px; color:var(--text-3);">${dateLabel}</span></td>
                         <td>${badge}</td>
-                        <td><button class="edit-btn" onclick="openEditModal('${entry.id}', '${safeName}', '${entry.type}', '${entry.date}', '${entry.handoff}', '${entry.content}', '${safeLink}')">Edit</button></td>
+                        <td>
+                          <div style="display:flex; gap:4px;">
+                            <button class="edit-btn" onclick="openEditModal('${entry.id}', '${safeName}', '${entry.type}', '${entry.date}', '${entry.handoff}', '${entry.content}', '${safeLink}')">Edit</button>
+                            <button class="edit-btn" id="btnCopy_${entry.id}" onclick="copyFromDashboard('${entry.id}')">Copy</button>
+                          </div>
+                        </td>
                        </tr>`;
             });
             tbody.innerHTML = html;

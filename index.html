@@ -30,11 +30,18 @@
     
     .section-title-wrapper { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; }
     .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-    .section-subtitle { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; }
+    
+    /* SUBTLE DROPDOWN */
+    .month-dropdown { background: transparent; border: none; font-family: inherit; font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; text-align: right; }
+    .month-dropdown-wrapper { position: relative; display: flex; align-items: center; }
+    .month-dropdown-wrapper::after { content: '▾'; font-size: 8px; color: var(--text-3); pointer-events: none; margin-left: 4px; }
 
     .dash-hero { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .dash-hero-title { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
-    .dash-hero-target { font-size: 9px; font-weight: 600; color: var(--text-3); }
+    .dash-hero-target { font-size: 9px; font-weight: 600; color: var(--text-3); margin-bottom: 4px; }
+    
+    /* SPLIT ANALYTICS */
+    .dash-hero-split { font-size: 9px; font-weight: 600; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
     .dash-hero-val { font-size: 32px; font-weight: 800; color: var(--navy); line-height: 1; }
     
     .progress-track { background: var(--border-soft); border-radius: 6px; height: 8px; width: 100%; overflow: hidden; margin-bottom: 20px; }
@@ -61,7 +68,6 @@
     .col-date { display: flex; flex-direction: column; gap: 4px; }
     .date-val { font-size: 11px; font-weight: 600; color: var(--text); }
 
-    /* CSS DOTS & SOFT BADGES */
     .soft-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 12px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; }
     .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
     .badge-pending { background: #fef3c7; color: #92570a; }
@@ -69,7 +75,6 @@
     .badge-done { background: #dcfce7; color: #166534; }
     .badge-done .status-dot { background: #16a34a; }
 
-    /* SVG ICON BUTTONS */
     .actions-cell { display: flex; gap: 6px; justify-content: flex-end; }
     .icon-btn { background: transparent; border: 1px solid transparent; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; color: var(--text-2); }
     .icon-btn:hover { background: var(--border-soft); border-color: var(--border); color: var(--navy); }
@@ -77,6 +82,12 @@
     
     .sync-btn { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--canvas); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; cursor: pointer; color: var(--text-2); transition: 0.2s; }
     .sync-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
+
+    /* GHOST ARCHIVE STYLES */
+    .archive-toggle { width: 100%; text-align: center; background: transparent; border: 1px dashed var(--border-soft); color: var(--text-3); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px; border-radius: 6px; cursor: pointer; margin-top: 12px; transition: 0.2s; }
+    .archive-toggle:hover { border-color: var(--border); color: var(--text-2); background: #faf9f7; }
+    .archive-drawer { display: none; margin-top: 12px; opacity: 0.65; transition: opacity 0.2s; }
+    .archive-drawer:hover { opacity: 1; }
 
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -125,13 +136,18 @@
       <div class="admin-card">
         <div class="section-title-wrapper">
           <span class="section-title">Campaign Pacing</span>
-          <span class="section-subtitle" id="currentMonthDisplay">Loading...</span>
+          <div class="month-dropdown-wrapper">
+            <select id="monthFilter" class="month-dropdown" onchange="fetchDashboardData(this.value)">
+              <option value="">Loading...</option>
+            </select>
+          </div>
         </div>
         
         <div class="dash-hero">
           <div>
             <div class="dash-hero-title">Total Seeded</div>
             <div class="dash-hero-target">Target Range: 15 - 20</div>
+            <div class="dash-hero-split" id="splitAnalytics">--</div>
           </div>
           <div class="dash-hero-val" id="valTotalSeeded">--</div>
         </div>
@@ -348,12 +364,10 @@
     let activeEditName = null;
     let globalEntriesData = [];
 
-    // SVG ICONS FOR CLEAN INTERFACE
     const svgEdit = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
     const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
     const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
     
-    // VISUAL ANCHOR SVGS
     const svgBox = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
     const svgPin = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
 
@@ -416,12 +430,21 @@
         document.getElementById('viewEntry').style.display = 'none';
         document.getElementById('tabReport').classList.add('active');
         document.getElementById('tabEntry').classList.remove('active');
-        fetchDashboardData();
+        fetchDashboardData(document.getElementById("monthFilter").value);
       } else {
         document.getElementById('viewEntry').style.display = 'block';
         document.getElementById('viewReport').style.display = 'none';
         document.getElementById('tabEntry').classList.add('active');
         document.getElementById('tabReport').classList.remove('active');
+      }
+    }
+
+    function toggleArchive() {
+      const drawer = document.getElementById('archiveDrawer');
+      if (drawer.style.display === 'none') {
+        drawer.style.display = 'block';
+      } else {
+        drawer.style.display = 'none';
       }
     }
 
@@ -497,7 +520,7 @@
             document.getElementById("productPackageOther").style.display = "none";
           }
           
-          fetchDashboardData(); 
+          fetchDashboardData(document.getElementById("monthFilter").value); 
 
           setTimeout(() => {
             btn.textContent = defaultText;
@@ -610,12 +633,16 @@
       });
     }
 
-    async function fetchDashboardData() {
+    async function fetchDashboardData(selectedMonth = "") {
       logToTerminal(`Fetching Live Data...`, "send");
 
       try {
-        const cacheBusterUrl = GAS_URL + "?t=" + new Date().getTime();
-        const response = await fetch(cacheBusterUrl, { redirect: "follow" });
+        let fetchUrl = GAS_URL + "?t=" + new Date().getTime();
+        if (selectedMonth && selectedMonth !== "") {
+           fetchUrl += "&month=" + encodeURIComponent(selectedMonth);
+        }
+
+        const response = await fetch(fetchUrl, { redirect: "follow" });
         const text = await response.text();
         
         let result;
@@ -628,20 +655,37 @@
         if(result.status === "success") {
           globalEntriesData = result.data.entries;
 
-          document.getElementById('currentMonthDisplay').textContent = result.data.month;
+          // Populate Month Dropdown
+          const monthSelect = document.getElementById("monthFilter");
+          monthSelect.innerHTML = "";
+          result.data.availableMonths.forEach(m => {
+             const option = document.createElement("option");
+             option.value = m;
+             option.textContent = m;
+             if (m === result.data.month) option.selected = true;
+             monthSelect.appendChild(option);
+          });
+
+          // Dashboard Metrics
           document.getElementById('valTotalSeeded').textContent = result.data.totalSeeded;
           document.getElementById('valPendingDel').textContent = result.data.pendingDeliveries; 
           document.getElementById('valToMin').textContent = result.data.remainingToMin;
           document.getElementById('valToMax').textContent = result.data.remainingToMax;
+          
+          // Split Analytics
+          document.getElementById('splitAnalytics').innerHTML = `${svgBox} ${result.data.totalDeliveries} Deliveries &nbsp;•&nbsp; ${svgPin} ${result.data.totalVisits} Visits`;
 
+          // Progress Bar
           let pct = (result.data.totalSeeded / 20) * 100;
           if (pct > 100) pct = 100;
           document.getElementById('progressBar').style.width = pct + '%';
 
+          // Timestamp
           const now = new Date();
           const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
           document.getElementById('lastUpdatedText').textContent = "Updated " + timeString;
 
+          // Packages
           if (result.data.packages && result.data.packages.length > 0) {
             const select = document.getElementById("productPackageSelect");
             select.innerHTML = '<option value="">Select a package...</option>';
@@ -651,16 +695,19 @@
             select.innerHTML += '<option value="Others">Others (Type manually)</option>';
           }
 
+          // Render Ledger
           const tbody = document.getElementById('entriesTableBody');
           if (result.data.entries.length === 0) {
-            tbody.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-3); font-size:11px;">No entries logged this month.</div>';
+            tbody.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-3); font-size:11px;">No entries logged for this month.</div>';
           } else {
-            let html = `<div class="list-header">
-                          <span>KOL</span>
-                          <span>Date</span>
-                          <span>Status</span>
-                          <span style="text-align:right;">Actions</span>
-                        </div>`;
+            let activeHtml = `<div class="list-header">
+                                <span>KOL</span>
+                                <span>Date</span>
+                                <span>Status</span>
+                                <span style="text-align:right;">Actions</span>
+                              </div>`;
+            let completedHtml = ``;
+            let completedCount = 0;
                         
             result.data.entries.forEach(entry => {
               let badgeClass = entry.handoff === "Pending" ? 'badge-pending' : 'badge-done';
@@ -670,13 +717,12 @@
               const safeName = entry.kol.replace(/'/g, "\\'");
               const safeLink = entry.link ? entry.link.replace(/'/g, "\\'") : "";
               
-              // Apply the new SVG visual anchors
               let isDelivery = String(entry.type).trim() === "Delivery";
               let typeIcon = isDelivery ? svgBox : svgPin;
               let typeLabelText = isDelivery ? "Delivery" : "Visit";
               let typeLabel = `<div style="display:flex; align-items:center; gap:4px; color:var(--text-3); font-size:9px; font-weight:600; text-transform:uppercase;">${typeIcon} ${typeLabelText}</div>`;
 
-              html += `<div class="list-row">
+              let rowMarkup = `<div class="list-row">
                           <div class="col-kol">
                             <span class="kol-name">${entry.kol}</span>
                             <span class="kol-handle">${handleText}</span>
@@ -691,8 +737,25 @@
                             <button class="icon-btn" id="btnCopy_${entry.id}" onclick="copyFromDashboard('${entry.id}')">${svgCopy}</button>
                           </div>
                        </div>`;
+
+              if (entry.handoff === "Completed" || entry.handoff === "No-Show / Cancelled") {
+                 completedHtml += rowMarkup;
+                 completedCount++;
+              } else {
+                 activeHtml += rowMarkup;
+              }
             });
-            tbody.innerHTML = html;
+
+            let finalHtml = activeHtml;
+            if (completedCount > 0) {
+              finalHtml += `
+                <button class="archive-toggle" onclick="toggleArchive()">📂 Show Completed (${completedCount})</button>
+                <div id="archiveDrawer" class="archive-drawer">
+                   ${completedHtml}
+                </div>
+              `;
+            }
+            tbody.innerHTML = finalHtml;
           }
         } else {
            throw new Error(result.message);

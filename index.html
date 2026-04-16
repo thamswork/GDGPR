@@ -8,14 +8,15 @@
   <style>
     :root {
       --navy: #1a1f2e; --navy2: #2d3447; --red: #c0392b; --red-soft: #fdf0ef; --red-border: #f5c6c2;
-      --canvas: #f7f5f0; --surface: #ffffff; --border: #e4e1db; --border-soft: #ede9e3;
+      --canvas: #f7f5f0; --surface: #ffffff; --border: #e4e1db; --border-soft: #f0eee9;
       --text: #1a1f2e; --text-2: #5a5750; --text-3: #9a9690;
       --s-green: #166534; --s-green-bg: #dcfce7; --s-green-border: #86efac;
       --s-amber: #92570a; --s-amber-bg: #fef3c7; --s-amber-border: #fcd34d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body { font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif; background: var(--canvas); min-height: 100vh; padding-bottom: 60px; }
+    body { font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif; background: var(--canvas); min-height: 100vh; padding-bottom: 60px; color: var(--text); }
     
+    /* Navigation */
     .top-nav { background: var(--navy); padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
     .nav-left { display: flex; align-items: baseline; gap: 10px; }
     .nav-wordmark { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; }
@@ -26,12 +27,59 @@
     .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
 
     .content { padding: 16px; max-width: 600px; margin: 0 auto; }
-    .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(26,31,46,0.04); position: relative; }
-    .section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; display: flex; justify-content: space-between;}
+    .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(26,31,46,0.03); position: relative; }
     
+    .section-title-wrapper { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; }
+    .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .section-subtitle { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; }
+
+    /* DASHBOARD UPGRADES */
+    .dash-hero { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .dash-hero-title { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .dash-hero-target { font-size: 9px; font-weight: 600; color: var(--text-3); }
+    .dash-hero-val { font-size: 32px; font-weight: 800; color: var(--navy); line-height: 1; }
+    
+    .progress-track { background: var(--border-soft); border-radius: 6px; height: 8px; width: 100%; overflow: hidden; margin-bottom: 20px; }
+    .progress-fill { background: var(--navy); height: 100%; width: 0%; border-radius: 6px; transition: width 0.8s ease; }
+
+    .dash-alert { background: var(--s-amber-bg); border-left: 4px solid var(--s-amber); padding: 12px 16px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .dash-alert-label { font-size: 12px; font-weight: 700; color: var(--s-amber); text-transform: uppercase; }
+    .dash-alert-val { font-size: 18px; font-weight: 800; color: var(--s-amber); }
+
+    .dash-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .dash-metric-box { border-top: 1px solid var(--border-soft); padding-top: 10px; }
+    .dash-metric-label { font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .dash-metric-val { font-size: 16px; font-weight: 800; color: var(--text); }
+
+    /* NOTION-STYLE LIST (Replaces heavy table) */
+    .list-container { display: flex; flex-direction: column; gap: 4px; }
+    .list-header { display: grid; grid-template-columns: 2fr 1fr 1fr auto; padding: 8px 4px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .list-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; padding: 12px 4px; border-bottom: 1px solid var(--border-soft); align-items: center; transition: background 0.2s; border-radius: 6px; }
+    .list-row:hover { background: #faf9f7; }
+    
+    .col-kol { display: flex; flex-direction: column; gap: 2px; }
+    .kol-name { font-size: 12px; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+    .kol-handle { font-size: 10px; font-weight: 600; color: var(--text-3); }
+    
+    .col-date { display: flex; flex-direction: column; gap: 2px; }
+    .date-val { font-size: 11px; font-weight: 600; color: var(--text); }
+    .date-label { font-size: 9px; font-weight: 600; color: var(--text-3); }
+
+    /* SOFT BADGES */
+    .soft-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 12px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; }
+    .badge-pending { background: #fef3c7; color: #92570a; }
+    .badge-done { background: #dcfce7; color: #166534; }
+
+    /* GHOST ICON BUTTONS */
+    .actions-cell { display: flex; gap: 6px; justify-content: flex-end; }
+    .icon-btn { background: transparent; border: 1px solid transparent; border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: 0.2s; color: var(--text-2); }
+    .icon-btn:hover { background: var(--border-soft); border-color: var(--border); }
+    .sync-btn { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--canvas); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; cursor: pointer; color: var(--text-2); transition: 0.2s; }
+    .sync-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
+
+    /* FORM STYLES (Kept standard) */
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    
     .input-label { font-size: 10px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
     .input-label span.optional { color: #a1a1aa; font-weight: 500; font-size: 9px; }
     .input-box { width: 100%; height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--canvas); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500; outline: none; transition: 0.15s; -webkit-appearance: none; }
@@ -42,29 +90,14 @@
     .btn-primary:active { transform: scale(0.98); }
     .btn-primary.success { background: var(--s-green); color: #fff; }
     .btn-secondary { background: var(--canvas); color: var(--navy); border: 1px solid var(--border); }
-    
     .btn-force { background: var(--canvas); color: var(--navy); border: 1px dashed var(--navy); padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; margin-bottom: 16px; }
 
     .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 0; }
     .checkbox-group label { font-size: 12px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
 
-    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .stat-card { padding: 16px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
-    .stat-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .stat-value { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 4px;}
-
-    .data-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; margin-top: 10px;}
-    .data-table th { padding: 8px; color: var(--text-3); font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-    .data-table td { padding: 10px 8px; color: var(--text); border-bottom: 1px solid var(--border-soft); font-weight: 500; }
-    
-    .badge-pending { background: var(--s-amber-bg); color: var(--s-amber); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
-    .badge-done { background: var(--s-green-bg); color: var(--s-green); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
-    
-    .edit-btn { background: var(--canvas); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.2s;}
-    .edit-btn:hover { background: var(--navy); color: white;}
-
-    #editModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; padding: 20px; align-items: center; justify-content: center; }
-    .modal-content { background: var(--surface); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    /* MODAL */
+    #editModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26,31,46,0.6); z-index: 1000; padding: 20px; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+    .modal-content { background: var(--surface); padding: 24px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
 
     /* SUBTLE DEBUGGER STYLES */
     .debug-panel { font-family: monospace; font-size: 10px; overflow-y: auto; word-break: break-all; }
@@ -91,67 +124,62 @@
   <div class="content">
     
     <div id="viewReport">
+      
       <div class="admin-card">
-        <div class="section-title">
-          <span>Campaign Status</span>
-          <span id="currentMonthDisplay" style="color: var(--navy);">Loading...</span>
+        <div class="section-title-wrapper">
+          <span class="section-title">Campaign Pacing</span>
+          <span class="section-subtitle" id="currentMonthDisplay">Loading...</span>
         </div>
         
-        <div class="summary-grid" style="margin-bottom: 12px;">
-          <div class="stat-card" style="background: var(--surface); grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; text-align: left;">
-            <div>
-              <div class="stat-label" style="margin-bottom:0;">Total Seeded</div>
-              <div style="font-size: 10px; color: var(--text-3); font-weight: 600;">Target: 15 - 20</div>
-            </div>
-            <div class="stat-value" id="valTotalSeeded">--</div>
+        <div class="dash-hero">
+          <div>
+            <div class="dash-hero-title">Total Seeded</div>
+            <div class="dash-hero-target">Target Range: 15 - 20</div>
           </div>
+          <div class="dash-hero-val" id="valTotalSeeded">--</div>
+        </div>
+        
+        <div class="progress-track">
+          <div class="progress-fill" id="progressBar"></div>
         </div>
 
-        <div class="summary-grid" style="margin-bottom: 12px;">
-          <div class="stat-card" style="background: var(--red-soft); border-color: var(--red-border);">
-            <div class="stat-label" style="color: var(--red);">To Reach Min (15)</div>
-            <div class="stat-value" style="color: var(--red);" id="valToMin">--</div>
-          </div>
-          <div class="stat-card" style="background: var(--s-green-bg); border-color: var(--s-green-border);">
-            <div class="stat-label" style="color: var(--s-green);">Remaining Slots</div>
-            <div class="stat-value" style="color: var(--s-green);" id="valToMax">--</div>
-          </div>
+        <div class="dash-alert">
+          <span class="dash-alert-label">Pending Deliveries</span>
+          <span class="dash-alert-val" id="valPendingDel">--</span>
         </div>
 
-        <div class="summary-grid">
-          <div class="stat-card" style="background: var(--s-amber-bg); border-color: var(--s-amber-border); grid-column: 1 / -1; padding: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span class="stat-label" style="color: var(--s-amber); margin:0;">Pending Deliveries</span>
-              <span class="stat-value" style="color: var(--s-amber); font-size: 20px;" id="valPendingDel">--</span>
-            </div>
+        <div class="dash-metrics">
+          <div class="dash-metric-box">
+            <div class="dash-metric-label">To Reach Min (15)</div>
+            <div class="dash-metric-val" id="valToMin" style="color: var(--s-amber);">--</div>
+          </div>
+          <div class="dash-metric-box">
+            <div class="dash-metric-label">Remaining Slots</div>
+            <div class="dash-metric-val" id="valToMax" style="color: var(--s-green);">--</div>
           </div>
         </div>
       </div>
 
-      <div class="admin-card">
-        <div class="section-title">Database & Sync</div>
-        <div style="overflow-x: auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>KOL</th>
-                <th>Action Date</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="entriesTableBody">
-              <tr><td colspan="4" style="text-align:center;">Loading data...</td></tr>
-            </tbody>
-          </table>
+      <div class="admin-card" style="padding: 20px 16px;">
+        <div class="section-title-wrapper" style="border-bottom: none; margin-bottom: 0;">
+          <span class="section-title">Master Ledger</span>
+          <div style="display:flex; align-items:center; gap: 8px;">
+            <span id="lastUpdatedText" style="font-size:9px; color:var(--text-3); font-weight:600;">--</span>
+            <button class="sync-btn" onclick="fetchDashboardData()">↻</button>
+          </div>
         </div>
-        <button class="btn-primary btn-secondary" id="btnRefresh" style="margin-top: 16px;" onclick="fetchDashboardData()">↻ Refresh Live Data</button>
+        
+        <div class="list-container" id="entriesTableBody">
+          <div style="padding: 20px; text-align: center; color: var(--text-3); font-size: 11px;">Fetching Live Data...</div>
+        </div>
       </div>
     </div>
 
     <div id="viewEntry" style="display: none;">
       <div class="admin-card">
-        <div class="section-title">New KOL Entry</div>
+        <div class="section-title-wrapper">
+          <span class="section-title">New KOL Entry</span>
+        </div>
         <div class="form-grid">
           <div>
             <span class="input-label">KOL Name / Handle</span>
@@ -181,7 +209,9 @@
       </div>
 
       <div class="admin-card">
-        <div class="section-title">Logistics Details</div>
+        <div class="section-title-wrapper">
+          <span class="section-title">Logistics Details</span>
+        </div>
         <div class="form-grid">
           
           <div id="packageContainer">
@@ -242,7 +272,10 @@
 
   <div id="editModal">
     <div class="modal-content">
-      <div class="section-title" style="margin-bottom: 8px;">Update Status: <span id="editName" style="color:var(--navy);"></span></div>
+      <div class="section-title-wrapper" style="border-bottom:none; margin-bottom:12px;">
+         <span class="section-title">Update Status</span>
+         <span id="editName" style="font-size:11px; font-weight:700; color:var(--navy);"></span>
+      </div>
       
       <button id="forceSyncBtn" class="btn-force" onclick="forcePushLogistics()" style="display:none;">🚚 Force Sync to Logistics</button>
 
@@ -280,7 +313,7 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <div style="display: flex; gap: 10px; margin-top: 24px;">
         <button class="btn-primary btn-secondary" style="flex: 1;" onclick="closeModal()">Cancel</button>
         <button class="btn-primary" id="btnUpdate" style="flex: 2;" onclick="saveUpdate()">Save Changes</button>
       </div>
@@ -309,8 +342,6 @@
     let activeEditType = null;
     let activeEditDate = null;
     let activeEditName = null;
-
-    // GLOBAL MEMORY FOR QUICK COPYING
     let globalEntriesData = [];
 
     function logToTerminal(message, type = "info") {
@@ -424,13 +455,11 @@
         });
         
         const text = await response.text();
-        logToTerminal(`Raw Server Response: ${text}`, "recv");
-
         let result;
         try {
            result = JSON.parse(text);
         } catch(e) {
-           logToTerminal(`CRITICAL ERROR: Google blocked request or script crashed.`, "error");
+           logToTerminal(`CRITICAL ERROR: Parse Fail.`, "error");
            throw new Error("Parse Fail");
         }
         
@@ -438,7 +467,7 @@
           logToTerminal(`SUCCESS: Data saved.`, "recv");
           
           if(buttonId === "btnSubmit" && result.type === "BOTH") {
-             btn.textContent = "✓ SAVED TO MASTER & LOGISTICS";
+             btn.textContent = "✓ SAVED & SYNCED";
           } else {
              btn.textContent = successText;
           }
@@ -478,7 +507,7 @@
 
     function forcePushLogistics() {
       const payload = { action: "force_logistics", id: activeEditId };
-      executePayload(payload, 'forceSyncBtn', "✓ PUSHED TO LOGISTICS", "🚚 Force Sync to Logistics");
+      executePayload(payload, 'forceSyncBtn', "✓ PUSHED", "🚚 Force Sync to Logistics");
     }
 
     function saveUpdate() {
@@ -522,7 +551,6 @@
       executePayload(payload, 'btnSubmit', "✓ SAVED", "LOG DATA");
     }
 
-    // THE QUICK COPY FUNCTION FOR THE DASHBOARD
     function copyFromDashboard(id) {
       const entry = globalEntriesData.find(e => e.id === id);
       if (entry) {
@@ -533,24 +561,12 @@
         
         navigator.clipboard.writeText(textToCopy).then(() => {
           const btn = document.getElementById("btnCopy_" + id);
-          btn.textContent = "✓ Copied";
-          btn.style.background = "var(--s-green)";
-          btn.style.color = "white";
-          btn.style.borderColor = "var(--s-green)";
-          
-          setTimeout(() => {
-            btn.textContent = "Copy";
-            btn.style.background = "var(--canvas)";
-            btn.style.color = "var(--navy)";
-            btn.style.borderColor = "var(--border)";
-          }, 2000);
-        }).catch(err => {
-          alert("Could not copy to clipboard. Please check permissions.");
+          btn.textContent = "✅";
+          setTimeout(() => { btn.textContent = "📋"; }, 2000);
         });
       }
     }
 
-    // THE ORIGINAL COPY BUTTON ON DATA ENTRY TAB
     function copyDispatchText() {
       const name = document.getElementById("kolName").value || "TBD";
       const date = document.getElementById("logDate").value || "TBD";
@@ -577,10 +593,7 @@
     }
 
     async function fetchDashboardData() {
-      const btn = document.getElementById("btnRefresh");
-      btn.textContent = "↻ Fetching...";
-      
-      logToTerminal(`Fetching Live Data (GET)...`, "send");
+      logToTerminal(`Fetching Live Data...`, "send");
 
       try {
         const cacheBusterUrl = GAS_URL + "?t=" + new Date().getTime();
@@ -591,14 +604,10 @@
         try {
            result = JSON.parse(text);
         } catch(e) {
-           logToTerminal(`GET ERROR: Did not return JSON. Output was: ${text.substring(0,50)}...`, "error");
            throw new Error("Invalid response from server.");
         }
         
         if(result.status === "success") {
-          logToTerminal(`GET SUCCESS: Loaded ${result.data.entries.length} entries.`, "recv");
-          
-          // STORE DATA IN GLOBAL MEMORY FOR THE COPY BUTTON
           globalEntriesData = result.data.entries;
 
           document.getElementById('currentMonthDisplay').textContent = result.data.month;
@@ -606,6 +615,16 @@
           document.getElementById('valPendingDel').textContent = result.data.pendingDeliveries; 
           document.getElementById('valToMin').textContent = result.data.remainingToMin;
           document.getElementById('valToMax').textContent = result.data.remainingToMax;
+
+          // Update Progress Bar
+          let pct = (result.data.totalSeeded / 20) * 100;
+          if (pct > 100) pct = 100;
+          document.getElementById('progressBar').style.width = pct + '%';
+
+          // Update Timestamp
+          const now = new Date();
+          const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          document.getElementById('lastUpdatedText').textContent = "Updated " + timeString;
 
           if (result.data.packages && result.data.packages.length > 0) {
             const select = document.getElementById("productPackageSelect");
@@ -618,44 +637,49 @@
 
           const tbody = document.getElementById('entriesTableBody');
           if (result.data.entries.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: var(--text-3);">No entries logged this month.</td></tr>';
+            tbody.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-3); font-size:11px;">No entries logged this month.</div>';
           } else {
-            let html = "";
+            let html = `<div class="list-header">
+                          <span>KOL</span>
+                          <span>Date</span>
+                          <span>Status</span>
+                          <span style="text-align:right;">Actions</span>
+                        </div>`;
+                        
             result.data.entries.forEach(entry => {
-              let badge = entry.handoff === "Pending" ? `<span class="badge-pending">Pending</span>` : `<span class="badge-done">Done</span>`;
+              let dotClass = entry.handoff === "Pending" ? '🟡' : '🟢';
+              let badgeClass = entry.handoff === "Pending" ? 'badge-pending' : 'badge-done';
+              let badge = `<span class="soft-badge ${badgeClass}">${dotClass} ${entry.handoff}</span>`;
               
-              let handleText = "";
-              if (entry.url && entry.url !== "" && entry.url !== "TBD") {
-                 let displayUrl = entry.url.replace("https://", "").replace("http://", "").replace("instagram.com/", "@");
-                 handleText = `<br><span style="font-size:9px; color:var(--navy); font-weight:700;">Handle: ${displayUrl}</span>`;
-              }
-              
+              let handleText = entry.url && entry.url !== "TBD" ? entry.url.replace("https://", "").replace("http://", "").replace("instagram.com/", "@") : "No Handle";
               const safeName = entry.kol.replace(/'/g, "\\'");
               const safeLink = entry.link ? entry.link.replace(/'/g, "\\'") : "";
-              let dateLabel = String(entry.type).trim() === "Delivery" ? "Delivery Date" : "Visit Date";
+              let dateLabel = String(entry.type).trim() === "Delivery" ? "Delivery" : "Visit";
 
-              html += `<tr>
-                        <td><span style="font-weight: 700;">${entry.kol}</span>${handleText}<br><span style="font-size:9px; color:var(--text-3);">${entry.type}</span></td>
-                        <td>${entry.date}<br><span style="font-size:9px; color:var(--text-3);">${dateLabel}</span></td>
-                        <td>${badge}</td>
-                        <td>
-                          <div style="display:flex; gap:4px;">
-                            <button class="edit-btn" onclick="openEditModal('${entry.id}', '${safeName}', '${entry.type}', '${entry.date}', '${entry.handoff}', '${entry.content}', '${safeLink}')">Edit</button>
-                            <button class="edit-btn" id="btnCopy_${entry.id}" onclick="copyFromDashboard('${entry.id}')">Copy</button>
+              html += `<div class="list-row">
+                          <div class="col-kol">
+                            <span class="kol-name">${entry.kol}</span>
+                            <span class="kol-handle">${handleText}</span>
                           </div>
-                        </td>
-                       </tr>`;
+                          <div class="col-date">
+                            <span class="date-val">${entry.date}</span>
+                            <span class="date-label">${dateLabel}</span>
+                          </div>
+                          <div>${badge}</div>
+                          <div class="actions-cell">
+                            <button class="icon-btn" onclick="openEditModal('${entry.id}', '${safeName}', '${entry.type}', '${entry.date}', '${entry.handoff}', '${entry.content}', '${safeLink}')">✏️</button>
+                            <button class="icon-btn" id="btnCopy_${entry.id}" onclick="copyFromDashboard('${entry.id}')">📋</button>
+                          </div>
+                       </div>`;
             });
             tbody.innerHTML = html;
           }
         } else {
-           logToTerminal(`GET API ERROR: ${result.message}`, "error");
            throw new Error(result.message);
         }
       } catch (error) {
-        document.getElementById('entriesTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--red);"><b>SYSTEM ERROR:</b> ${error.message}</td></tr>`;
+        document.getElementById('entriesTableBody').innerHTML = `<div style="padding:20px; text-align:center; color:var(--red); font-size:11px;"><b>ERROR:</b> ${error.message}</div>`;
       }
-      btn.textContent = "↻ Refresh Live Data";
     }
   </script>
 </body>

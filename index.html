@@ -195,7 +195,8 @@
       white-space:nowrap;
     }
     .icon-btn:hover{background:var(--canvas);border-color:var(--navy);color:var(--navy)}
-    .list-row-actions{display:flex;gap:4px;justify-content:flex-end}
+    .list-row-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+    .row-credit-hint{font-size:9px;font-weight:700;color:var(--text-3);white-space:nowrap}
     .icon-btn.uploaded{border-color:var(--s-green);color:var(--s-green)}
     .sync-btn{
       display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;
@@ -867,6 +868,40 @@
   </div>
 </div>
 
+<!-- ENTRY MANAGE MODAL — content type, upload, view, copy -->
+<div class="modal-overlay" id="entryModal">
+  <div class="modal-box" style="max-width:400px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+      <div>
+        <div id="entryModalKol" style="font-size:16px;font-weight:800;color:var(--navy)">—</div>
+        <div id="entryModalMeta" style="font-size:11px;color:var(--text-3);margin-top:3px">—</div>
+      </div>
+      <button onclick="closeEntryModal()" style="background:var(--canvas);border:1px solid var(--border);border-radius:8px;width:28px;height:28px;font-size:14px;color:var(--text-2);cursor:pointer;line-height:1">×</button>
+    </div>
+
+    <div class="input-label" style="margin-bottom:8px">Content Format(s)</div>
+    <div class="format-grid" id="entryModalFormats" style="margin-bottom:6px"></div>
+    <div class="field-hint" id="entryModalCreditHint" style="margin-bottom:14px">0 credits</div>
+    <button class="btn-primary btn-secondary" id="entryModalSaveBtn" onclick="saveModalFormats()" style="height:40px;font-size:11px;margin-bottom:18px">Save Content Format</button>
+
+    <div class="field-divider" style="margin-bottom:16px"></div>
+
+    <div class="input-label" style="margin-bottom:8px">Uploaded Content</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <span id="entryModalLinksCount" style="font-size:12px;color:var(--text-2);font-weight:600">No content uploaded yet</span>
+      <div style="display:flex;gap:6px">
+        <button class="icon-btn" id="entryModalViewBtn" onclick="viewContentLinks(currentModalEntryId)" style="display:none">View</button>
+        <button class="icon-btn" id="entryModalUploadBtn" onclick="document.getElementById('entryModalFileInput').click()">Upload</button>
+      </div>
+    </div>
+    <input type="file" accept="image/*" multiple id="entryModalFileInput" style="display:none" onchange="handleModalUpload(this)">
+
+    <div class="field-divider" style="margin-bottom:16px"></div>
+
+    <button class="btn-primary btn-secondary" onclick="copyFromDashboard(currentModalEntryId)" style="height:40px;font-size:11px">Copy Dispatch Text</button>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════
 // CONFIG
@@ -890,6 +925,7 @@ const CREDIT_TARGET = 40;
 let globalEntriesData = [];
 let isLiffClient = false;
 let liffProfile  = null;
+let currentModalEntryId = null;
 
 // ═══════════════════════════════════════════
 // UTILITIES
@@ -914,11 +950,12 @@ function formatDateTime(d,t){
   return ft?(fd+' · '+ft):fd;
 }
 
+function entryCredits(entry){
+  const formats=String((entry&&entry.formats)||'').split(',').map(f=>f.trim()).filter(Boolean);
+  return formats.reduce((s,f)=>s+(CREDIT_MAP[f]||0),0);
+}
 function computeCredits(entries){
-  return (entries||[]).reduce((sum,e)=>{
-    const formats=String(e.formats||'').split(',').map(f=>f.trim()).filter(Boolean);
-    return sum+formats.reduce((s,f)=>s+(CREDIT_MAP[f]||0),0);
-  },0);
+  return (entries||[]).reduce((sum,e)=>sum+entryCredits(e),0);
 }
 
 // aliases kept for compatibility with original
@@ -1477,10 +1514,11 @@ async function uploadOneToCloudinary(file){
   return cloudData.secure_url;
 }
 
-async function uploadContentScreenshot(entryId, fileInputEl){
+async function uploadContentScreenshot(entryId, fileInputEl, btnEl){
   const files=fileInputEl.files?[...fileInputEl.files]:[];
   if(!files.length) return;
-  const btn=document.getElementById('btnUpload_'+entryId);
+  const btn=btnEl||document.getElementById('btnUpload_'+entryId);
+  const origLabel=btn?btn.textContent:'Upload';
   if(btn){btn.disabled=true;btn.textContent='Uploading 0/'+files.length;}
   diagLog('Uploading '+files.length+' file(s) for '+entryId,'warn');
   try {
@@ -1506,12 +1544,18 @@ async function uploadContentScreenshot(entryId, fileInputEl){
 
     if(entry){entry.link=combined;entry.content='Content Received';}
     diagLog('Screenshot(s) saved to entry: '+entryId,'ok');
-    fetchDashboardData(document.getElementById('monthFilter').value);
+    await fetchDashboardData(document.getElementById('monthFilter').value);
+    if(currentModalEntryId===entryId) openEntryModal(entryId); // refresh modal with new link count
   } catch(err){
     diagLog('Upload FAILED: '+err.message,'err');
     alert('Upload failed: '+err.message);
-    if(btn){btn.disabled=false;btn.textContent='Upload';}
+    if(btn){btn.disabled=false;btn.textContent=origLabel;}
   }
+}
+
+function handleModalUpload(fileInputEl){
+  if(!currentModalEntryId) return;
+  uploadContentScreenshot(currentModalEntryId, fileInputEl, document.getElementById('entryModalUploadBtn'));
 }
 
 function viewContentLinks(entryId){
@@ -1521,13 +1565,80 @@ function viewContentLinks(entryId){
   links.forEach((url,i)=>{ setTimeout(()=>window.open(url,'_blank'),i*150); });
 }
 
+// ═══════════════════════════════════════════
+// ENTRY MANAGE MODAL — content format + upload + view, all in one place
+// ═══════════════════════════════════════════
+function openEntryModal(entryId){
+  const entry=globalEntriesData.find(e=>e.id===entryId);
+  if(!entry) return;
+  currentModalEntryId=entryId;
+  const isDelivery=String(entry.type||'').trim()==='Delivery';
+  const selected=String(entry.formats||'').split(',').map(f=>f.trim()).filter(Boolean);
+
+  document.getElementById('entryModalKol').textContent=entry.kol||'';
+  document.getElementById('entryModalMeta').textContent=(isDelivery?'Delivery':'Visit')+' · '+formatDateTime(entry.date,entry.time);
+
+  document.getElementById('entryModalFormats').innerHTML=Object.keys(CREDIT_MAP).map(fmt=>{
+    const checked=selected.includes(fmt)?'checked':'';
+    return `<label class="format-chip">
+      <input type="checkbox" class="modal-format-cb" value="${fmt}" ${checked} onchange="updateModalCreditHint()">
+      <div class="format-chip-inner">
+        <div class="format-check-box"><svg class="format-check-icon" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+        <span class="format-chip-label">${fmt}</span>
+        <span class="format-chip-credit">${CREDIT_MAP[fmt]} cr</span>
+      </div>
+    </label>`;
+  }).join('');
+  updateModalCreditHint();
+
+  const links=String(entry.link||'').split(',').filter(Boolean);
+  document.getElementById('entryModalLinksCount').textContent=links.length?(links.length+' file'+(links.length===1?'':'s')+' uploaded'):'No content uploaded yet';
+  document.getElementById('entryModalViewBtn').style.display=links.length?'inline-flex':'none';
+
+  document.getElementById('entryModal').style.display='flex';
+}
+function closeEntryModal(){
+  document.getElementById('entryModal').style.display='none';
+  currentModalEntryId=null;
+}
+function updateModalCreditHint(){
+  const checked=[...document.querySelectorAll('.modal-format-cb:checked')].map(cb=>cb.value);
+  const credits=checked.reduce((s,f)=>s+(CREDIT_MAP[f]||0),0);
+  document.getElementById('entryModalCreditHint').textContent=credits+' credit'+(credits===1?'':'s')+' from this entry';
+}
+async function saveModalFormats(){
+  if(!currentModalEntryId) return;
+  const entry=globalEntriesData.find(e=>e.id===currentModalEntryId);
+  const checked=[...document.querySelectorAll('.modal-format-cb:checked')].map(cb=>cb.value);
+  const btn=document.getElementById('entryModalSaveBtn');
+  const origText=btn.textContent;
+  btn.disabled=true; btn.textContent='Saving...';
+  try {
+    const url=GAS_URL+'?action=update_entry&id='+encodeURIComponent(currentModalEntryId)
+      +'&formats='+encodeURIComponent(checked.join(', '))
+      +'&t='+Date.now();
+    const res=await fetch(url,{redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status!=='success') throw new Error(data.message||'Save failed');
+    if(entry) entry.formats=checked.join(', ');
+    diagLog('Content format saved: '+currentModalEntryId,'ok');
+    btn.textContent='Saved';
+    setTimeout(()=>{btn.textContent=origText;btn.disabled=false;},1500);
+    fetchDashboardData(document.getElementById('monthFilter').value);
+  } catch(err){
+    diagLog('Save format FAILED: '+err.message,'err');
+    alert('Save failed: '+err.message);
+    btn.disabled=false; btn.textContent=origText;
+  }
+}
+
 function copyFromDashboard(id){
   const entry=globalEntriesData.find(e=>e.id===id);
   if(!entry) return;
   const text=entry.dispatchText||('Name: '+entry.kol);
   navigator.clipboard.writeText(text).then(()=>{
-    const btn=document.getElementById('btnCopy_'+id);
-    if(btn){btn.textContent='OK';setTimeout(()=>{btn.textContent='Copy';},2000);}
+    const btn=document.getElementById('btnCopy_'+id)||event.currentTarget;
+    if(btn){const orig=btn.textContent;btn.textContent='Copied';setTimeout(()=>{btn.textContent=orig;},2000);}
   });
 }
 
@@ -1645,10 +1756,8 @@ async function fetchDashboardData(selectedMonth){
             </div>
             <span class="soft-badge ${badgeClass}">${entry.handoff}</span>
             <div class="list-row-actions">
-              <button class="icon-btn" id="btnCopy_${entry.id}" onclick="copyFromDashboard('${entry.id}')">Copy</button>
-              ${entry.link ? `<button class="icon-btn uploaded" onclick="viewContentLinks('${entry.id}')">View (${entry.link.split(',').filter(Boolean).length})</button>` : ''}
-              <button class="icon-btn" id="btnUpload_${entry.id}" onclick="document.getElementById('fileInput_${entry.id}').click()">Upload</button>
-              <input type="file" accept="image/*" multiple id="fileInput_${entry.id}" style="display:none" onchange="uploadContentScreenshot('${entry.id}', this)">
+              <span class="row-credit-hint">${entryCredits(entry)} cr</span>
+              <button class="icon-btn" onclick="openEntryModal('${entry.id}')">Manage</button>
             </div>
           </div>`;
           if(DONE.includes(entry.handoff)){completedHtml+=row;completedCount++;}else{activeHtml+=row;}

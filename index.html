@@ -877,8 +877,8 @@ const LIFF_ID  = '2009857007-aGpmlZq9';
 // Cloudinary — unsigned upload preset only. Never put your API secret here,
 // this file is public. Create the preset at:
 // Cloudinary Dashboard → Settings → Upload → Add upload preset → Signing Mode: Unsigned
-const CLOUDINARY_CLOUD_NAME    = 'YOUR_CLOUD_NAME';     // e.g. 'dxyz1234a'
-const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET';  // e.g. 'gdg_kol_content'
+const CLOUDINARY_CLOUD_NAME    = 'dynjnftnu';     // e.g. 'dxyz1234a'
+const CLOUDINARY_UPLOAD_PRESET = 'gdg_seed';  // e.g. 'gdg_kol_content'
 
 // Credits system: Reel/Post = 2 credits, Story = 1 credit. Monthly target = 40.
 const CREDIT_MAP = { 'IG Story':1, 'IG Reel':2, 'TikTok':2, 'Photo Dump':2 };
@@ -1473,7 +1473,7 @@ async function uploadContentScreenshot(entryId, fileInputEl){
   if(btn){btn.disabled=true;btn.textContent='Uploading...';}
   diagLog('Uploading content screenshot: '+entryId,'warn');
   try {
-    if(CLOUDINARY_CLOUD_NAME==='YOUR_CLOUD_NAME'){throw new Error('Cloudinary not configured yet');}
+    if(CLOUDINARY_CLOUD_NAME==='dynjnftnu'){throw new Error('Cloudinary not configured yet');}
     const fd=new FormData();
     fd.append('file',file);
     fd.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);

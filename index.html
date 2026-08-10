@@ -1464,44 +1464,61 @@ function copyDispatchText(){
   });
 }
 // ═══════════════════════════════════════════
-// CLOUDINARY: KOL CONTENT SCREENSHOT UPLOAD
+// CLOUDINARY: KOL CONTENT SCREENSHOT UPLOAD (multi-file)
 // ═══════════════════════════════════════════
-async function uploadContentScreenshot(entryId, fileInputEl){
-  const file=fileInputEl.files&&fileInputEl.files[0];
-  if(!file) return;
-  const btn=document.getElementById('btnUpload_'+entryId);
-  if(btn){btn.disabled=true;btn.textContent='Uploading...';}
-  diagLog('Uploading content screenshot: '+entryId,'warn');
-  try {
-    if(CLOUDINARY_CLOUD_NAME==='dynjnftnu'){throw new Error('Cloudinary not configured yet');}
-    const fd=new FormData();
-    fd.append('file',file);
-    fd.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);
-    fd.append('folder','gdg-kol-content');
-    fd.append('context','entry_id='+entryId);
-    const cloudRes=await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`,{method:'POST',body:fd});
-    const cloudData=await cloudRes.json();
-    if(!cloudData.secure_url) throw new Error((cloudData.error&&cloudData.error.message)||'Cloudinary upload failed');
-    diagLog('Cloudinary OK: '+cloudData.secure_url,'ok');
+async function uploadOneToCloudinary(file){
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);
+  fd.append('folder','gdg-kol-content');
+  const cloudRes=await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`,{method:'POST',body:fd});
+  const cloudData=await cloudRes.json();
+  if(!cloudData.secure_url) throw new Error((cloudData.error&&cloudData.error.message)||'Cloudinary upload failed');
+  return cloudData.secure_url;
+}
 
-    // Persist the link + content status back into Sheets via the existing GAS route
+async function uploadContentScreenshot(entryId, fileInputEl){
+  const files=fileInputEl.files?[...fileInputEl.files]:[];
+  if(!files.length) return;
+  const btn=document.getElementById('btnUpload_'+entryId);
+  if(btn){btn.disabled=true;btn.textContent='Uploading 0/'+files.length;}
+  diagLog('Uploading '+files.length+' file(s) for '+entryId,'warn');
+  try {
+    const newUrls=[];
+    for(let i=0;i<files.length;i++){
+      if(btn) btn.textContent='Uploading '+(i+1)+'/'+files.length;
+      newUrls.push(await uploadOneToCloudinary(files[i]));
+    }
+    diagLog('Cloudinary OK: '+newUrls.length+' file(s)','ok');
+
+    const entry=globalEntriesData.find(e=>e.id===entryId);
+    const existing=(entry&&entry.link)?entry.link.split(',').filter(Boolean):[];
+    const combined=existing.concat(newUrls).join(',');
+
+    // Persist the combined link list + content status back into Sheets
     const url=GAS_URL+'?action=update_entry&id='+encodeURIComponent(entryId)
-      +'&driveLink='+encodeURIComponent(cloudData.secure_url)
+      +'&driveLink='+encodeURIComponent(combined)
       +'&contentStatus='+encodeURIComponent('Content Received')
       +'&t='+Date.now();
     const res=await fetch(url,{redirect:'follow'});
     const data=JSON.parse(await res.text());
     if(data.status!=='success') throw new Error(data.message||'Sheet update failed');
 
-    const entry=globalEntriesData.find(e=>e.id===entryId);
-    if(entry){entry.link=cloudData.secure_url;entry.content='Content Received';}
-    diagLog('Screenshot saved to entry: '+entryId,'ok');
+    if(entry){entry.link=combined;entry.content='Content Received';}
+    diagLog('Screenshot(s) saved to entry: '+entryId,'ok');
     fetchDashboardData(document.getElementById('monthFilter').value);
   } catch(err){
     diagLog('Upload FAILED: '+err.message,'err');
     alert('Upload failed: '+err.message);
     if(btn){btn.disabled=false;btn.textContent='Upload';}
   }
+}
+
+function viewContentLinks(entryId){
+  const entry=globalEntriesData.find(e=>e.id===entryId);
+  if(!entry||!entry.link) return;
+  const links=entry.link.split(',').filter(Boolean);
+  links.forEach((url,i)=>{ setTimeout(()=>window.open(url,'_blank'),i*150); });
 }
 
 function copyFromDashboard(id){
@@ -1576,6 +1593,9 @@ async function fetchDashboardData(selectedMonth){
     if(result.status!=='success') throw new Error(result.message||'GAS error');
     const d=result.data;
     globalEntriesData=d.entries;
+    // Backend returns the status column as `acknowledged`; the rest of this
+    // file reads it as `handoff` — map it once here so badges render correctly.
+    globalEntriesData.forEach(e=>{ e.handoff = e.acknowledged || 'Pending'; });
     diagLog('Data loaded: '+d.entries.length+' entries','ok');
 
     const addCycleOpt=(sel)=>{const opt=document.createElement('option');opt.value='__new_cycle__';opt.textContent='+ Start New Month Cycle';sel.appendChild(opt);};
@@ -1626,10 +1646,9 @@ async function fetchDashboardData(selectedMonth){
             <span class="soft-badge ${badgeClass}">${entry.handoff}</span>
             <div class="list-row-actions">
               <button class="icon-btn" id="btnCopy_${entry.id}" onclick="copyFromDashboard('${entry.id}')">Copy</button>
-              ${entry.link
-                ? `<button class="icon-btn uploaded" onclick="window.open('${entry.link}','_blank')">View</button>`
-                : `<button class="icon-btn" id="btnUpload_${entry.id}" onclick="document.getElementById('fileInput_${entry.id}').click()">Upload</button>`}
-              <input type="file" accept="image/*" id="fileInput_${entry.id}" style="display:none" onchange="uploadContentScreenshot('${entry.id}', this)">
+              ${entry.link ? `<button class="icon-btn uploaded" onclick="viewContentLinks('${entry.id}')">View (${entry.link.split(',').filter(Boolean).length})</button>` : ''}
+              <button class="icon-btn" id="btnUpload_${entry.id}" onclick="document.getElementById('fileInput_${entry.id}').click()">Upload</button>
+              <input type="file" accept="image/*" multiple id="fileInput_${entry.id}" style="display:none" onchange="uploadContentScreenshot('${entry.id}', this)">
             </div>
           </div>`;
           if(DONE.includes(entry.handoff)){completedHtml+=row;completedCount++;}else{activeHtml+=row;}

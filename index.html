@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GDG — PR & KOLS SEEDING</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --navy:#1a1f2e; --navy2:#2d3447;
+      --canvas:#f7f5f0; --surface:#fff; --border:#e4e1db; --border-soft:#f0eee9;
+      --text:#1a1f2e; --text-2:#5a5750; --text-3:#9a9690;
+      --s-green:#166534; --s-green-bg:#dcfce7;
+      --s-amber:#92570a; --s-amber-bg:#fef3c7;
+      --s-blue:#1e40af; --s-blue-bg:#dbeafe;
+      --neon:#00e676; --neon-dark:#00b248;
+      --red:#b91c1c; --red-bg:#fee2e2;
+      --radius-sm:8px; --radius-md:12px; --radius-lg:16px;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;-webkit-font-smoothing:antialiased}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--canvas);color:var(--text);padding-bottom:56px}
+
+    /* ── NAV ─────────────────────────────── */
+    .top-nav{
+      background:var(--navy);
+      padding:0 16px;
+      height:56px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:200;
+      box-shadow:0 2px 12px rgba(0,0,0,.25);
+    }
+    .nav-left{display:flex;align-items:center;gap:12px}
+    .nav-hamburger{
+      background:rgba(255,255,255,.08);border:none;cursor:pointer;
+      display:none;flex-direction:column;gap:4px;
+      padding:8px;border-radius:8px;transition:.15s;
+    }
+    .nav-hamburger:active{background:rgba(255,255,255,.15)}
+    .nav-hamburger span{display:block;width:18px;height:2px;background:#fff;border-radius:2px}
+    .liff-mode .nav-hamburger{display:flex}
+    .nav-wordmark{font-size:17px;font-weight:800;color:#fff;letter-spacing:.5px}
+    .nav-tag{
+      font-size:9px;font-weight:600;color:rgba(255,255,255,.3);
+      letter-spacing:2px;text-transform:uppercase;
+      padding:3px 8px;border-radius:20px;
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+    }
+    .nav-liff-badge{
+      font-size:9px;font-weight:700;background:var(--neon);color:#111;
+      padding:4px 10px;border-radius:20px;letter-spacing:.5px;
+      text-transform:uppercase;display:none;
+    }
+    .liff-mode .nav-liff-badge{display:inline-block}
+
+    /* ── TABS ────────────────────────────── */
+    .tab-menu{
+      display:flex;background:var(--surface);
+      border-bottom:1.5px solid var(--border);
+      position:sticky;top:56px;z-index:190;
+    }
+    .tab-btn{
+      flex:1;text-align:center;padding:0;height:46px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;color:var(--text-3);
+      text-transform:uppercase;letter-spacing:.8px;cursor:pointer;
+      transition:.2s;border-bottom:2.5px solid transparent;
+      position:relative;
+    }
+    .tab-btn.active{color:var(--navy);border-bottom-color:var(--navy)}
+    .tab-new-month{
+      display:flex;align-items:center;padding:0 16px;
+      font-size:9px;font-weight:800;color:var(--navy);
+      cursor:pointer;text-transform:uppercase;letter-spacing:.8px;
+      border-left:1px solid var(--border);white-space:nowrap;gap:5px;
+    }
+    .liff-mode .tab-menu{display:none}
+
+    /* ── SIDEBAR ─────────────────────────── */
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(26,31,46,.55);z-index:300;backdrop-filter:blur(2px)}
+    .sidebar-overlay.open{display:block}
+    .sidebar{
+      position:fixed;top:0;left:0;height:100%;width:270px;
+      background:var(--navy);z-index:400;
+      transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+      display:none;flex-direction:column;
+      box-shadow:4px 0 30px rgba(0,0,0,.4);
+    }
+    .liff-mode .sidebar{display:flex}
+    .sidebar.open{transform:translateX(0)}
+    .sidebar-header{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .sidebar-wordmark{font-size:22px;font-weight:800;color:#fff}
+    .sidebar-sub{font-size:9px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+    .sidebar-profile{
+      padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;align-items:center;gap:12px;
+    }
+    .sidebar-avatar{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.2);object-fit:cover}
+    .sidebar-profile-name{font-size:13px;font-weight:700;color:#fff}
+    .sidebar-profile-sub{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
+    .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+    .sidebar-item{
+      display:flex;align-items:center;gap:12px;padding:14px 20px;
+      font-size:13px;font-weight:600;color:rgba(255,255,255,.5);
+      cursor:pointer;transition:.15s;border-left:3px solid transparent;
+    }
+    .sidebar-item:hover{color:#fff;background:rgba(255,255,255,.04)}
+    .sidebar-item.active{color:#fff;background:rgba(255,255,255,.07);border-left-color:#fff}
+    .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08)}
+    .sidebar-close{
+      width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+      color:rgba(255,255,255,.45);padding:11px;border-radius:8px;
+      font-size:11px;font-weight:600;cursor:pointer;
+      letter-spacing:.5px;text-transform:uppercase;font-family:inherit;transition:.15s;
+    }
+    .sidebar-close:hover{background:rgba(255,255,255,.1)}
+
+    /* ── LAYOUT ──────────────────────────── */
+    .content{padding:16px;max-width:480px;margin:0 auto}
+
+    /* ── CARDS ───────────────────────────── */
+    .admin-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius-md);padding:20px;margin-bottom:14px;
+      box-shadow:var(--shadow-sm);
+    }
+    .section-label{
+      font-size:10px;font-weight:700;text-transform:uppercase;
+      letter-spacing:1px;color:var(--text-3);margin-bottom:16px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border-soft)}
+    .section-title-wrapper{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+
+    /* ── KPI ─────────────────────────────── */
+    .dash-hero-val{font-size:36px;font-weight:800;color:var(--navy);line-height:1}
+    .progress-track{background:var(--border-soft);border-radius:6px;height:6px;width:100%;overflow:hidden;margin-bottom:18px}
+    .progress-fill{background:var(--navy);height:100%;width:0;border-radius:6px;transition:width .8s ease}
+    .dash-alert{
+      background:var(--s-amber-bg);border:1px solid rgba(146,87,10,.15);
+      border-left:3px solid var(--s-amber);
+      padding:12px 14px;border-radius:10px;
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;
+    }
+    .dash-alert-label{font-size:10px;font-weight:700;color:var(--s-amber);text-transform:uppercase;letter-spacing:.5px}
+    .dash-alert-val{font-size:20px;font-weight:800;color:var(--s-amber)}
+    .dash-metrics{display:grid;grid-template-columns:1fr 1fr;gap:0}
+    .dash-metric-box{
+      padding:14px 0;
+      border-top:1px solid var(--border-soft);
+    }
+    .dash-metric-box:nth-child(2){padding-left:18px;border-left:1px solid var(--border-soft)}
+    .dash-metric-label{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .dash-metric-val{font-size:18px;font-weight:800}
+    .month-dropdown{
+      background:var(--canvas);border:1px solid var(--border);
+      font-family:inherit;font-size:10px;font-weight:700;
+      color:var(--text-2);text-transform:uppercase;cursor:pointer;
+      outline:none;padding:5px 10px;border-radius:8px;
+    }
+
+    /* ── MASTER LEDGER ───────────────────── */
+    .list-container{display:flex;flex-direction:column;gap:2px;max-height:380px;overflow-y:auto}
+    .list-row{
+      display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto auto;
+      padding:12px 6px;border-bottom:1px solid var(--border-soft);
+      align-items:center;border-radius:8px;cursor:pointer;gap:8px;
+      transition:.15s;
+    }
+    .list-row:hover{background:#faf9f7}
+    .col-kol{display:flex;flex-direction:column;gap:3px;min-width:0}
+    .kol-name{font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .kol-handle{font-size:9px;font-weight:600;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .date-val{font-size:11px;font-weight:600;color:var(--text)}
+    .type-tag{font-size:8px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+    .soft-badge{
+      display:inline-flex;align-items:center;
+      padding:3px 8px;border-radius:8px;
+      font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+      white-space:nowrap;
+    }
+    .badge-pending{background:#fef3c7;color:#92570a}
+    .badge-ack{background:var(--s-blue-bg);color:var(--s-blue)}
+    .badge-done{background:var(--s-green-bg);color:var(--s-green)}
+    .icon-btn{
+      background:transparent;border:1px solid var(--border);border-radius:7px;
+      height:30px;padding:0 10px;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all .15s;color:var(--text-2);
+      font-size:9px;font-weight:700;font-family:inherit;text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .icon-btn:hover{background:var(--canvas);border-color:var(--navy);color:var(--navy)}
+    .list-row-actions{display:flex;gap:4px;justify-content:flex-end}
+    .icon-btn.uploaded{border-color:var(--s-green);color:var(--s-green)}
+    .sync-btn{
+      display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;
+      text-transform:uppercase;background:var(--canvas);border:1px solid var(--border);
+      padding:5px 10px;border-radius:8px;cursor:pointer;color:var(--text-2);
+      transition:.15s;font-family:inherit;
+    }
+    .sync-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .archive-toggle{
+      width:100%;text-align:center;background:transparent;
+      border:1px dashed var(--border);color:var(--text-3);
+      font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+      padding:9px;border-radius:8px;cursor:pointer;margin-top:12px;
+      transition:.15s;font-family:inherit;
+    }
+    .archive-toggle:hover{border-color:var(--border);color:var(--text-2)}
+
+    /* ── FORM ────────────────────────────── */
+    .form-stack{display:flex;flex-direction:column;gap:16px}
+    .field-group{display:flex;flex-direction:column;gap:6px}
+    .field-row{display:grid;gap:12px}
+    .field-row.cols-2{grid-template-columns:1fr 1fr}
+
+    .input-label{
+      font-size:10px;font-weight:700;color:var(--text-3);
+      text-transform:uppercase;letter-spacing:.8px;display:block;
+    }
+    .input-box{
+      width:100%;height:46px;padding:0 14px;
+      border-radius:10px;border:1.5px solid var(--border);
+      background:var(--canvas);color:var(--text);
+      font-family:inherit;font-size:14px;font-weight:500;
+      outline:none;transition:.2s;
+      -webkit-appearance:none;appearance:none;
+    }
+    .input-box:focus{border-color:var(--navy);background:var(--surface);box-shadow:0 0 0 3px rgba(26,31,46,.08)}
+    .input-box::placeholder{color:var(--text-3);font-weight:400}
+    textarea.input-box{height:84px;padding:12px 14px;resize:none;line-height:1.5}
+    select.input-box{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9690' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 14px center;
+      padding-right:36px;cursor:pointer;
+    }
+
+    /* Seeding type pills */
+    .type-pill-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .type-pill{
+      position:relative;cursor:pointer;
+    }
+    .type-pill input{position:absolute;opacity:0;width:0;height:0}
+    .type-pill-inner{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:12px 8px;border-radius:10px;border:2px solid var(--border);
+      background:var(--canvas);transition:.2s;gap:4px;text-align:center;
+    }
+    .type-pill input:checked ~ .type-pill-inner{
+      border-color:var(--navy);background:var(--surface);
+      box-shadow:0 0 0 3px rgba(26,31,46,.08);
+    }
+    .type-pill-label{font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px}
+    .type-pill-sub{font-size:9px;color:var(--text-3);font-weight:500}
+
+    /* Content format checkboxes */
+    .format-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .format-chip{
+      position:relative;cursor:pointer;
+    }
+    .format-chip input{position:absolute;opacity:0;width:0;height:0}
+    .format-chip-inner{
+      display:flex;align-items:center;gap:8px;
+      padding:11px 12px;border-radius:10px;border:1.5px solid var(--border);
+      background:var(--canvas);transition:.2s;
+    }
+    .format-chip input:checked ~ .format-chip-inner{
+      border-color:var(--navy);background:rgba(26,31,46,.04);
+    }
+    .format-check-box{
+      width:18px;height:18px;border-radius:5px;flex-shrink:0;
+      border:2px solid var(--border);background:var(--surface);
+      display:flex;align-items:center;justify-content:center;transition:.2s;
+    }
+    .format-chip input:checked ~ .format-chip-inner .format-check-box{
+      background:var(--navy);border-color:var(--navy);
+    }
+    .format-check-icon{
+      width:10px;height:10px;stroke:#fff;stroke-width:3;fill:none;
+      display:none;
+    }
+    .format-chip input:checked ~ .format-chip-inner .format-check-icon{display:block}
+    .format-chip-label{font-size:12px;font-weight:600;color:var(--text)}
+    .format-chip-credit{font-size:9px;font-weight:600;color:var(--text-3);margin-left:auto}
+
+    /* Field divider */
+    .field-divider{height:1px;background:var(--border-soft);margin:4px 0}
+
+    /* Section sub-header */
+    .sub-section{
+      padding:12px 14px;border-radius:10px;
+      background:var(--canvas);border:1px solid var(--border-soft);
+      margin-bottom:0;
+    }
+    .sub-section-label{
+      font-size:9px;font-weight:700;color:var(--text-3);
+      text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;
+    }
+
+    /* Buttons */
+    .btn-primary{
+      background:var(--navy);color:#fff;height:50px;width:100%;
+      padding:0 18px;border:none;border-radius:10px;
+      font-family:inherit;font-size:13px;font-weight:700;
+      letter-spacing:.5px;cursor:pointer;transition:.2s;
+      text-transform:uppercase;
+    }
+    .btn-primary:active{transform:scale(.98);opacity:.9}
+    .btn-primary.success{background:var(--s-green)}
+    .btn-secondary{
+      background:var(--canvas);color:var(--navy);
+      border:1.5px solid var(--border);
+    }
+    .btn-secondary:hover{border-color:var(--navy)}
+    .btn-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+
+    /* ── DISPATCH HERO ────────────────────── */
+    .dispatch-hero{
+      background:linear-gradient(135deg,#111827 0%,#1a1f2e 100%);
+      border-radius:var(--radius-lg);padding:20px;margin-bottom:14px;
+      border:1px solid rgba(0,230,118,.12);
+    }
+    .dispatch-hero-label{font-size:9px;font-weight:600;color:rgba(0,230,118,.6);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
+    .dispatch-hero-count{font-size:44px;font-weight:800;color:#fff;line-height:1}
+    .dispatch-hero-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:4px}
+
+    /* GROUP PICKER */
+    .group-picker-row{
+      display:flex;align-items:center;gap:10px;padding:10px 12px;
+      background:rgba(255,255,255,.06);border-radius:10px;
+      border:1px solid rgba(255,255,255,.1);margin-bottom:12px;
+    }
+    .group-picker-label{font-size:9px;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+    .group-picker-select{
+      flex:1;background:transparent;border:none;
+      color:rgba(255,255,255,.85);font-family:inherit;
+      font-size:12px;font-weight:600;outline:none;cursor:pointer;
+      -webkit-appearance:none;
+    }
+
+    /* ACTION BUTTONS */
+    .btn-action-row{display:flex;gap:6px;width:100%;margin-top:10px}
+    .btn-action{
+      flex:1;background:var(--navy);color:#fff;
+      border:1px solid var(--navy);border-radius:8px;
+      padding:10px 4px;font-family:inherit;
+      font-size:9px;font-weight:700;letter-spacing:.5px;
+      text-transform:uppercase;cursor:pointer;transition:.18s;
+      white-space:nowrap;text-align:center;min-width:0;
+    }
+    .btn-action:active{transform:scale(.97)}
+    .btn-action.success{background:#166534;border-color:#166534}
+    .btn-send-all{
+      width:100%;background:var(--neon);color:#111;border:none;
+      border-radius:10px;padding:14px;font-family:inherit;
+      font-size:11px;font-weight:800;letter-spacing:1px;
+      text-transform:uppercase;cursor:pointer;transition:.18s;margin-bottom:8px;
+    }
+    .btn-send-all.hidden{display:none}
+    .btn-send-all.done{background:#166534;color:#fff}
+    .btn-summary{
+      width:100%;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);
+      border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:12px;
+      font-family:inherit;font-size:10px;font-weight:700;
+      letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:.15s;
+    }
+    .btn-summary:hover{background:rgba(255,255,255,.12)}
+
+    /* ── DISPATCH CARDS ───────────────────── */
+    .dispatch-list{display:flex;flex-direction:column;gap:8px}
+    .dispatch-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius-md);overflow:hidden;
+      box-shadow:var(--shadow-sm);
+    }
+    .dispatch-card-inner{padding:14px 16px}
+    .dispatch-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+    .dispatch-kol{font-size:16px;font-weight:700;color:var(--navy);letter-spacing:-.2px;line-height:1.2}
+    .dispatch-type-pill{
+      font-size:8px;font-weight:700;padding:4px 10px;border-radius:8px;
+      text-transform:uppercase;flex-shrink:0;letter-spacing:.8px;margin-top:2px;
+    }
+    .pill-delivery{background:var(--s-green-bg);color:var(--s-green)}
+    .pill-visit{background:var(--s-amber-bg);color:var(--s-amber)}
+    .dispatch-date{font-size:11px;font-weight:500;color:var(--text-3);margin-bottom:8px}
+    .dispatch-pkg{
+      background:var(--canvas);border-radius:7px;
+      padding:7px 10px;font-size:11px;font-weight:500;
+      color:var(--text-2);margin-bottom:10px;
+    }
+    .dispatch-ack-chip{
+      display:inline-flex;align-items:center;
+      font-size:8px;font-weight:700;padding:3px 9px;
+      border-radius:7px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;
+    }
+    .chip-acked{background:var(--s-green-bg);color:var(--s-green)}
+    .dispatch-status-done{font-size:9px;font-weight:700;color:var(--s-green);text-transform:uppercase;margin-bottom:8px}
+    .accent-delivery{border-top:3px solid var(--neon-dark)}
+    .accent-visit{border-top:3px solid var(--s-amber)}
+
+    /* ── DIAG BAR ─────────────────────────── */
+    .diag-bar{
+      background:var(--navy);border-radius:10px;
+      padding:12px 14px;margin-bottom:14px;cursor:pointer;
+    }
+    .diag-bar-top{display:flex;justify-content:space-between;align-items:center}
+    .diag-bar-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px}
+    .diag-status{display:flex;align-items:center;gap:7px}
+    .diag-dot{width:7px;height:7px;border-radius:50%;background:#fbbf24;transition:.3s;flex-shrink:0}
+    .diag-status-text{font-size:10px;font-weight:600;color:rgba(255,255,255,.65)}
+    .diag-log-inner{
+      display:none;margin-top:10px;border-top:1px solid rgba(255,255,255,.08);
+      padding-top:8px;max-height:140px;overflow-y:auto;
+      font-family:monospace;font-size:9px;
+    }
+
+    /* ── ACCORDION ────────────────────────── */
+    .accordion-header{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:14px 16px;cursor:pointer;user-select:none;
+      border-top:1px solid var(--border-soft);
+    }
+    .accordion-chevron{font-size:11px;color:var(--text-3);transition:transform .2s;display:inline-block}
+
+    /* ── MODAL ────────────────────────────── */
+    .modal-overlay{
+      display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(26,31,46,.7);z-index:1100;padding:20px;
+      align-items:center;justify-content:center;backdrop-filter:blur(4px);
+    }
+    .modal-box{
+      background:var(--surface);border-radius:var(--radius-lg);
+      padding:28px 24px;width:100%;max-width:380px;
+      box-shadow:0 24px 64px rgba(0,0,0,.25);
+    }
+
+    /* ── SKELETON ─────────────────────────── */
+    @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+    .skeleton{
+      background:linear-gradient(90deg,#f0eee9 25%,#e4e1db 50%,#f0eee9 75%);
+      background-size:800px 100%;animation:shimmer 1.4s infinite;
+      border-radius:5px;height:11px;margin-bottom:7px;
+    }
+
+    /* ── UNACK SECTION ────────────────────── */
+    #unackSection{margin-bottom:14px}
+
+    /* ── EMPTY STATE ──────────────────────── */
+    .empty-state{
+      padding:28px 20px;text-align:center;color:var(--text-3);
+      font-size:12px;line-height:1.5;
+    }
+
+    /* ── FIELD HINT ───────────────────────── */
+    .field-hint{font-size:10px;color:var(--text-3);font-weight:500;margin-top:2px}
+
+    /* ── MAP LINK BUTTON ──────────────────── */
+    .map-input-wrap{position:relative}
+    .map-input-wrap .input-box{padding-right:44px}
+    .map-input-btn{
+      position:absolute;right:6px;top:50%;transform:translateY(-50%);
+      background:var(--canvas);border:1px solid var(--border);
+      border-radius:7px;width:32px;height:32px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-wordmark">GDG</div>
+    <div class="sidebar-sub">Seeding Control Center</div>
+  </div>
+  <div class="sidebar-profile" id="sidebarProfile">
+    <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">?</div>
+    <div>
+      <div class="sidebar-profile-name" id="sidebarName">LINE User</div>
+      <div class="sidebar-profile-sub">LINE Connected</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-item active" id="sidebarItemDispatch" onclick="switchView('dispatch');closeSidebar()">Dispatch</div>
+    <div class="sidebar-item" id="sidebarItemReport" onclick="switchView('report');closeSidebar()">Live Reporting</div>
+    <div class="sidebar-item" id="sidebarItemEntry" onclick="switchView('entry');closeSidebar()">Data Entry</div>
+    <div class="sidebar-item" onclick="openNewCycleModal();closeSidebar()" style="border-top:1px solid rgba(255,255,255,.06);margin-top:8px">New Month Cycle</div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="sidebar-close" onclick="closeSidebar()">Close Menu</button>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <div class="nav-left">
+    <button class="nav-hamburger" id="hamburgerBtn" onclick="openSidebar()">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-wordmark">GDG</div>
+    <div class="nav-tag">Seeding Control</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span class="nav-liff-badge">LINE</span>
+  </div>
+</nav>
+
+<!-- TABS -->
+<div class="tab-menu">
+  <div class="tab-btn active" id="tabReport" onclick="switchView('report')">Reporting</div>
+  <div class="tab-btn" id="tabEntry" onclick="switchView('entry')">Entry</div>
+  <div class="tab-new-month" onclick="openNewCycleModal()">
+    <span style="font-size:13px">+</span> New Month
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ═══ LIVE REPORTING ═══ -->
+  <div id="viewReport">
+    <div class="admin-card">
+      <div class="section-title-wrapper">
+        <span class="section-title">Campaign Pacing</span>
+        <select id="monthFilter" class="month-dropdown" onchange="if(this.value==='__new_cycle__'){this.selectedIndex=0;openNewCycleModal();}else{fetchDashboardData(this.value);}">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Total Credits</div>
+          <div style="font-size:10px;color:var(--text-3)">Target: 40 Credits</div>
+        </div>
+        <div class="dash-hero-val" id="valTotalCredits">--</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
+      <div class="dash-alert">
+        <div>
+          <div class="dash-alert-label">Pending Deliveries</div>
+          <div style="font-size:10px;color:var(--s-amber);margin-top:2px;font-weight:500">Awaiting acknowledgement</div>
+        </div>
+        <div class="dash-alert-val" id="valPendingDel">--</div>
+      </div>
+      <div class="dash-metrics">
+        <div class="dash-metric-box">
+          <div class="dash-metric-label">To Reach Target (40)</div>
+          <div class="dash-metric-val" id="valToMin" style="color:var(--s-amber)">--</div>
+        </div>
+        <div class="dash-metric-box">
+          <div class="dash-metric-label">KOLs Seeded</div>
+          <div class="dash-metric-val" id="valToMax" style="color:var(--navy)">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-card" style="padding:18px 16px">
+      <div class="section-title-wrapper" style="margin-bottom:0">
+        <span class="section-title">Master Ledger</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="lastUpdatedText" style="font-size:9px;color:var(--text-3);font-weight:600">--</span>
+          <button class="sync-btn" onclick="fetchDashboardData()">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Sync
+          </button>
+        </div>
+      </div>
+      <div id="entriesTableBody" style="margin-top:14px">
+        <div class="empty-state">Loading...</div>
+      </div>
+      <button class="archive-toggle" id="btnShowMaster" onclick="toggleArchive('archiveMaster',this)" style="display:none">Show Completed History</button>
+      <div id="archiveMaster" style="display:none;margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- ═══ DATA ENTRY ═══ -->
+  <div id="viewEntry" style="display:none">
+
+    <!-- KOL Info card -->
+    <div class="admin-card">
+      <div class="section-label">KOL Information</div>
+      <div class="form-stack">
+        <div class="field-group">
+          <label class="input-label" for="kolName">KOL Name / Handle</label>
+          <input type="text" id="kolName" class="input-box" placeholder="e.g. Thyme or @thyme_official" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label class="input-label" for="handleUrl">Profile URL</label>
+          <input type="url" id="handleUrl" class="input-box" placeholder="instagram.com/username" autocomplete="off" inputmode="url">
+        </div>
+
+        <!-- Seeding Type — visual pill selector -->
+        <div class="field-group">
+          <label class="input-label">Seeding Type</label>
+          <div class="type-pill-row">
+            <label class="type-pill">
+              <input type="radio" name="seedingType" id="typeDelivery" value="Delivery" checked onchange="onSeedingTypeChange()">
+              <div class="type-pill-inner">
+                <div class="type-pill-label">Delivery</div>
+                <div class="type-pill-sub">Ship to address</div>
+              </div>
+            </label>
+            <label class="type-pill">
+              <input type="radio" name="seedingType" id="typeVisit" value="Store Invite" onchange="onSeedingTypeChange()">
+              <div class="type-pill-inner">
+                <div class="type-pill-label">Store Invite</div>
+                <div class="type-pill-sub">In-store visit</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Content Formats -->
+        <div class="field-group">
+          <label class="input-label">Content Format(s)</label>
+          <div class="format-grid">
+            <label class="format-chip">
+              <input type="checkbox" class="cb-format" value="IG Story">
+              <div class="format-chip-inner">
+                <div class="format-check-box">
+                  <svg class="format-check-icon" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg>
+                </div>
+                <span class="format-chip-label">IG Story</span>
+                <span class="format-chip-credit">1 cr</span>
+              </div>
+            </label>
+            <label class="format-chip">
+              <input type="checkbox" class="cb-format" value="IG Reel">
+              <div class="format-chip-inner">
+                <div class="format-check-box">
+                  <svg class="format-check-icon" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg>
+                </div>
+                <span class="format-chip-label">IG Reel</span>
+                <span class="format-chip-credit">2 cr</span>
+              </div>
+            </label>
+            <label class="format-chip">
+              <input type="checkbox" class="cb-format" value="TikTok">
+              <div class="format-chip-inner">
+                <div class="format-check-box">
+                  <svg class="format-check-icon" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg>
+                </div>
+                <span class="format-chip-label">TikTok</span>
+                <span class="format-chip-credit">2 cr</span>
+              </div>
+            </label>
+            <label class="format-chip">
+              <input type="checkbox" class="cb-format" value="Photo Dump">
+              <div class="format-chip-inner">
+                <div class="format-check-box">
+                  <svg class="format-check-icon" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg>
+                </div>
+                <span class="format-chip-label">Photo Dump</span>
+                <span class="format-chip-credit">2 cr</span>
+              </div>
+            </label>
+          </div>
+          <div class="field-hint" id="formatCreditHint">0 credits selected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logistics card -->
+    <div class="admin-card">
+      <div class="section-label">Logistics Details</div>
+      <div class="form-stack">
+
+        <!-- Date & Time — always visible -->
+        <div class="field-row cols-2">
+          <div class="field-group">
+            <label class="input-label" for="logDate">Date</label>
+            <input type="date" id="logDate" class="input-box">
+          </div>
+          <div class="field-group">
+            <label class="input-label" for="logTime">Time</label>
+            <input type="time" id="logTime" class="input-box">
+          </div>
+        </div>
+
+        <!-- Product Package — shared by Delivery AND Store Visit -->
+        <div class="field-group" id="packageContainer">
+          <label class="input-label" for="productPackageSelect">Product Package</label>
+          <select id="productPackageSelect" class="input-box" onchange="toggleCustomPackage()">
+            <option value="">Select package...</option>
+          </select>
+          <input type="text" id="productPackageOther" class="input-box" placeholder="Describe the package..." style="display:none;margin-top:8px">
+        </div>
+
+        <!-- DELIVERY-only fields -->
+        <div id="deliveryFields">
+          <div class="sub-section">
+            <div class="sub-section-label">Delivery Info</div>
+            <div class="form-stack">
+              <div class="field-row cols-2">
+                <div class="field-group">
+                  <label class="input-label" for="logPhone">Phone</label>
+                  <input type="tel" id="logPhone" class="input-box" placeholder="08X-XXX-XXXX" inputmode="tel">
+                </div>
+                <div class="field-group">
+                  <label class="input-label" for="backupPhone">Backup</label>
+                  <input type="tel" id="backupPhone" class="input-box" placeholder="Optional" inputmode="tel">
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="input-label" for="logAddress">Delivery Address</label>
+                <textarea id="logAddress" class="input-box" placeholder="Full delivery address including floor/room"></textarea>
+              </div>
+              <div class="field-group">
+                <label class="input-label" for="googleMap">Google Maps Link</label>
+                <div class="map-input-wrap">
+                  <input type="url" id="googleMap" class="input-box" placeholder="goo.gl/maps/..." inputmode="url">
+                  <div class="map-input-btn" onclick="openMap()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISIT-only fields -->
+        <div id="venueFields" style="display:none">
+          <div class="sub-section">
+            <div class="sub-section-label">Store Visit Info</div>
+            <div class="field-group">
+              <label class="input-label" for="storeVenue">Venue / Branch Name</label>
+              <input type="text" id="storeVenue" class="input-box" placeholder="e.g. BIANCA EMSPHERE">
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes — always visible -->
+        <div class="field-group">
+          <label class="input-label" for="logNotes">Notes / Special Requests</label>
+          <textarea id="logNotes" class="input-box" placeholder="Allergies, door codes, special handling..."></textarea>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="btn-row">
+          <button class="btn-primary" id="btnSubmit" onclick="submitData()">Log Entry</button>
+          <button class="btn-primary btn-secondary" id="btnCopy" onclick="copyDispatchText()" style="width:auto;padding:0 18px;white-space:nowrap">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DISPATCH ═══ -->
+  <div id="viewDispatch" style="display:none">
+
+    <!-- Diagnostics -->
+    <div class="diag-bar" onclick="document.getElementById('diagLogInner').style.display=document.getElementById('diagLogInner').style.display==='none'?'block':'none'">
+      <div class="diag-bar-top">
+        <span class="diag-bar-label">System Status</span>
+        <div class="diag-status">
+          <div class="diag-dot" id="diagDot"></div>
+          <span class="diag-status-text" id="diagStatusText">Initialising...</span>
+        </div>
+      </div>
+      <div class="diag-log-inner" id="diagLogInner" style="display:none"></div>
+    </div>
+
+    <!-- Hero -->
+    <div class="dispatch-hero">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div>
+          <div class="dispatch-hero-label">SEEDING CAMPAIGN</div>
+          <div class="dispatch-hero-count" id="dispatchHeroCount">--</div>
+          <div class="dispatch-hero-sub" id="dispatchHeroSub">-- Deliveries · -- Visits</div>
+        </div>
+        <select id="dispatchMonthFilter" onchange="if(this.value==='__new_cycle__'){this.selectedIndex=0;openNewCycleModal();}else{fetchDashboardData(this.value);}"
+          style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.85);font-family:inherit;font-size:10px;font-weight:700;padding:6px 10px;border-radius:8px;outline:none;cursor:pointer;-webkit-appearance:none;max-width:120px">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <!-- Group picker -->
+      <div class="group-picker-row">
+        <span class="group-picker-label">Send to</span>
+        <select id="groupPickerSelect" class="group-picker-select">
+          <option value="PR_WORK">PR Work Group</option>
+          <option value="OPS_GROUP">Ops / Warehouse Group</option>
+          <option value="PICKER">Choose Group (picker)</option>
+        </select>
+        <span style="color:rgba(255,255,255,.3);font-size:10px;pointer-events:none">▾</span>
+      </div>
+      <button class="btn-send-all hidden" id="btnSendAllUnack" onclick="sendUnackCarousel()">Send All Reminders</button>
+      <button class="btn-summary" id="btnSendSummary" onclick="sendSummary(this)">Send Campaign Summary</button>
+    </div>
+
+    <!-- Unack section -->
+    <div id="unackSection" style="display:none">
+      <div id="unackCardList" class="dispatch-list"></div>
+    </div>
+
+    <!-- All entries accordion -->
+    <div class="admin-card" style="padding:0;overflow:hidden">
+      <div class="accordion-header" onclick="toggleDispatchList(this)">
+        <span class="section-title" style="font-size:12px">This Month's Entries</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="sync-btn" onclick="event.stopPropagation();fetchDashboardData()" style="margin:0">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <span id="dispatchListChevron" class="accordion-chevron">▼</span>
+        </div>
+      </div>
+      <div id="dispatchListWrap" style="display:none;padding:0 14px 14px">
+        <div id="dispatchList" class="dispatch-list">
+          <div class="empty-state">Tap to expand</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /content -->
+
+<!-- NEW MONTH CYCLE MODAL -->
+<div class="modal-overlay" id="newCycleModal">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+      <div style="width:48px;height:48px;border-radius:14px;background:rgba(26,31,46,.06);border:1px solid rgba(26,31,46,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a1f2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:var(--navy)">New Month Cycle</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:3px" id="newCycleSubtitle">Starting fresh campaign cycle</div>
+      </div>
+    </div>
+    <div style="background:var(--canvas);border-radius:12px;padding:16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="text-align:center;flex:1">
+          <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Closing</div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)" id="newCyclePrevMonth">—</div>
+        </div>
+        <div style="font-size:20px;color:var(--text-3);padding:0 12px">→</div>
+        <div style="text-align:center;flex:1">
+          <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Starting</div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)" id="newCycleNewMonth">—</div>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--canvas);border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Closing Month Stats</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+        <div><div style="font-size:22px;font-weight:800;color:var(--navy)" id="cycleStatTotal">—</div><div style="font-size:9px;color:var(--text-3);font-weight:600;text-transform:uppercase;margin-top:2px">Total</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:#166534" id="cycleStatDone">—</div><div style="font-size:9px;color:var(--text-3);font-weight:600;text-transform:uppercase;margin-top:2px">Done</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:#92570a" id="cycleStatPending">—</div><div style="font-size:9px;color:var(--text-3);font-weight:600;text-transform:uppercase;margin-top:2px">Pending</div></div>
+      </div>
+    </div>
+    <label style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--canvas);border-radius:10px;margin-bottom:20px;cursor:pointer">
+      <input type="checkbox" id="cyclesSendSummary" checked style="width:18px;height:18px;accent-color:#1a1f2e;flex-shrink:0;margin-top:1px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--navy)">Send closing summary to PR Work</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:3px;line-height:1.4">Pushes the monthly summary card before switching (LINE only)</div>
+      </div>
+    </label>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeNewCycleModal()" style="flex:1;height:46px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-2);cursor:pointer;transition:.15s">Cancel</button>
+      <button onclick="confirmNewCycle(this)" style="flex:2;height:46px;background:var(--navy);border:none;border-radius:10px;font-family:inherit;font-size:12px;font-weight:700;color:#fff;cursor:pointer;letter-spacing:.5px;text-transform:uppercase">Start New Cycle</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const GAS_URL  = 'https://script.google.com/macros/s/AKfycbwmoyRMwnnwhGEzfWnwUNvqcApxB2eg90FrTAoJaU4rj1PPOyC4aPF09EkfO4dJZqLp8A/exec';
+const LIFF_ID  = '2009857007-aGpmlZq9';
+
+// Cloudinary — unsigned upload preset only. Never put your API secret here,
+// this file is public. Create the preset at:
+// Cloudinary Dashboard → Settings → Upload → Add upload preset → Signing Mode: Unsigned
+const CLOUDINARY_CLOUD_NAME    = 'YOUR_CLOUD_NAME';     // e.g. 'dxyz1234a'
+const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET';  // e.g. 'gdg_kol_content'
+
+// Credits system: Reel/Post = 2 credits, Story = 1 credit. Monthly target = 40.
+const CREDIT_MAP = { 'IG Story':1, 'IG Reel':2, 'TikTok':2, 'Photo Dump':2 };
+const CREDIT_TARGET = 40;
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let globalEntriesData = [];
+let isLiffClient = false;
+let liffProfile  = null;
+
+// ═══════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════
+function sanitize(str){
+  if(!str) return '-';
+  return String(str).replace(/[\x00-\x09\x0B\x0C\x0E-\x1F]/g,' ').substring(0,500)||'.';
+}
+function san(s){ return sanitize(s||''); }
+
+function formatDate(d){
+  if(!d) return '';
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const m=String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return String(d);
+  return parseInt(m[3],10)+' '+months[parseInt(m[2],10)-1];
+}
+function formatDateTime(d,t){
+  const fd=formatDate(d);
+  if(!fd) return '';
+  const ft=t?String(t).substring(0,5):'';
+  return ft?(fd+' · '+ft):fd;
+}
+
+function computeCredits(entries){
+  return (entries||[]).reduce((sum,e)=>{
+    const formats=String(e.formats||'').split(',').map(f=>f.trim()).filter(Boolean);
+    return sum+formats.reduce((s,f)=>s+(CREDIT_MAP[f]||0),0);
+  },0);
+}
+
+// aliases kept for compatibility with original
+function logToTerminal(msg,type){ diagLog(msg,type); }
+function t(key){ return key; }
+function applyLang(){}
+
+function diagLog(msg,type){
+  type=type||'info';
+  const inner=document.getElementById('diagLogInner');
+  const dot  =document.getElementById('diagDot');
+  const txt  =document.getElementById('diagStatusText');
+  if(inner){
+    const div=document.createElement('div');
+    div.style.cssText='padding:2px 0;border-bottom:1px solid rgba(255,255,255,.05);color:'+(type==='err'?'#f87171':type==='ok'?'#4ade80':type==='warn'?'#fbbf24':'rgba(255,255,255,.4)');
+    div.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+    inner.insertBefore(div,inner.firstChild);
+    while(inner.children.length>25) inner.removeChild(inner.lastChild);
+  }
+  if(dot&&txt){
+    dot.style.background=type==='err'?'#f87171':type==='ok'?'#4ade80':type==='warn'?'#fbbf24':'#94a3b8';
+    txt.textContent=msg.substring(0,45);
+  }
+}
+
+// ═══════════════════════════════════════════
+// SEEDING TYPE TOGGLE (package field is shared, always visible)
+// ═══════════════════════════════════════════
+function onSeedingTypeChange(){
+  const isVisit=document.getElementById('typeVisit').checked;
+  document.getElementById('deliveryFields').style.display=isVisit?'none':'block';
+  document.getElementById('venueFields').style.display=isVisit?'block':'none';
+}
+function getSeedingType(){
+  return document.getElementById('typeVisit').checked?'Store Invite':'Delivery';
+}
+
+// ═══════════════════════════════════════════
+// FORMAT CREDIT HINT
+// ═══════════════════════════════════════════
+function updateFormatCreditHint(){
+  const checked=[...document.querySelectorAll('.cb-format:checked')].map(cb=>cb.value);
+  const credits=checked.reduce((s,f)=>s+(CREDIT_MAP[f]||0),0);
+  const hint=document.getElementById('formatCreditHint');
+  if(hint) hint.textContent=credits+' credit'+(credits===1?'':'s')+' selected';
+}
+
+// ═══════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+function setSidebarActive(view){
+  ['Report','Entry','Dispatch'].forEach(v=>{
+    const el=document.getElementById('sidebarItem'+v);
+    if(el) el.classList.toggle('active',v.toLowerCase()===view);
+  });
+}
+
+// ═══════════════════════════════════════════
+// LIFF INIT
+// ═══════════════════════════════════════════
+async function initLiff(){
+  diagLog('LIFF: initialising...','info');
+  try {
+    await liff.init({liffId:LIFF_ID});
+    if(liff.isInClient()){
+      isLiffClient=true;
+      document.body.classList.add('liff-mode');
+      diagLog('LIFF: running inside LINE client','ok');
+      try {
+        liffProfile=await liff.getProfile();
+        diagLog('Profile: '+liffProfile.displayName,'ok');
+        document.getElementById('sidebarName').textContent=liffProfile.displayName;
+        if(liffProfile.pictureUrl){
+          document.getElementById('sidebarProfile').innerHTML=
+            '<img class="sidebar-avatar" src="'+liffProfile.pictureUrl+'" alt=""><div><div class="sidebar-profile-name">'+liffProfile.displayName+'</div><div class="sidebar-profile-sub">LINE Connected</div></div>';
+        }
+      } catch(pe){ diagLog('Profile error: '+pe.message,'warn'); }
+    } else {
+      diagLog('LIFF: external browser','warn');
+    }
+  } catch(err){ diagLog('LIFF init failed: '+err.message,'err'); }
+}
+
+// ═══════════════════════════════════════════
+// VIEW SWITCHER
+// ═══════════════════════════════════════════
+function switchView(view){
+  ['Report','Entry','Dispatch'].forEach(v=>{
+    document.getElementById('view'+v).style.display='none';
+    const tab=document.getElementById('tab'+v);
+    if(tab) tab.classList.remove('active');
+  });
+  const V=view.charAt(0).toUpperCase()+view.slice(1);
+  document.getElementById('view'+V).style.display='block';
+  const tab=document.getElementById('tab'+V);
+  if(tab) tab.classList.add('active');
+  setSidebarActive(view);
+  if(view==='report'||view==='entry') fetchDashboardData(document.getElementById('monthFilter').value);
+  if(view==='dispatch') renderDispatchList();
+}
+
+// ═══════════════════════════════════════════
+// GROUP PICKER
+// ═══════════════════════════════════════════
+function getSelectedGroup(){
+  const sel=document.getElementById('groupPickerSelect');
+  return sel?sel.value:'PR_WORK';
+}
+
+// ═══════════════════════════════════════════
+// MAP HELPER
+// ═══════════════════════════════════════════
+function openMap(){
+  const url=document.getElementById('googleMap').value;
+  if(url) window.open(url,'_blank');
+}
+
+// ═══════════════════════════════════════════
+// FLEX BUILDERS
+// ═══════════════════════════════════════════
+function buildUnackBubble(entry){
+  const isDelivery=String(entry.type||'').trim()==='Delivery';
+  const kolName=san(entry.kol)||'Unknown';
+  const dateVal=san(formatDate(entry.date))||'—';
+  const timeVal=san(entry.time)||'';
+  const pkgVal=san(entry.pkg)||'';
+  const dispatchText=san(entry.dispatchText)||('Name: '+kolName+' / Date: '+dateVal);
+  const copyUri='https://line.me/R/msg/text/?'+ encodeURIComponent(dispatchText.substring(0,280));
+
+  const bodyRows=[
+    {type:'text',text:kolName,weight:'bold',size:'xl',color:'#1a1f2e',wrap:true},
+    {type:'text',text:isDelivery?'DELIVERY':'STORE VISIT',weight:'bold',size:'xxs',color:isDelivery?'#166534':'#92570a',margin:'sm'},
+    {type:'separator',color:'#e4e1db',margin:'md'},
+    {type:'box',layout:'horizontal',margin:'md',contents:[
+      {type:'text',text:'DATE',color:'#9a9690',size:'xxs',flex:2,weight:'bold'},
+      {type:'text',text:dateVal+(timeVal?' · '+timeVal:''),color:'#1a1f2e',size:'xs',flex:5,weight:'bold',wrap:true}
+    ]}
+  ];
+  if(pkgVal&&pkgVal!=='—'&&pkgVal!=='N/A'){
+    bodyRows.push({type:'box',layout:'horizontal',margin:'sm',contents:[
+      {type:'text',text:'PKG',color:'#9a9690',size:'xxs',flex:2,weight:'bold'},
+      {type:'text',text:pkgVal,color:'#1a1f2e',size:'xs',flex:5,weight:'bold',wrap:true}
+    ]});
+  }
+  return {
+    type:'bubble',size:'kilo',
+    header:{type:'box',layout:'vertical',backgroundColor:'#b91c1c',paddingAll:'10px',
+      contents:[{type:'text',text:'UNACKNOWLEDGED ORDER',color:'#ffffff',weight:'bold',size:'xxs',align:'center'}]},
+    body:{type:'box',layout:'vertical',paddingAll:'14px',contents:bodyRows},
+    footer:{type:'box',layout:'vertical',paddingAll:'12px',spacing:'sm',contents:[
+      {type:'button',action:{type:'uri',label:'Copy Dispatch Info',uri:copyUri},style:'primary',color:'#1a1f2e',height:'sm'}
+    ]}
+  };
+}
+
+function buildUnackCarousel(){
+  const unacked=globalEntriesData.filter(e=>!e.acknowledged||e.acknowledged.trim()==='');
+  if(!unacked.length) return null;
+  return {type:'carousel',contents:unacked.slice(0,10).map(e=>buildUnackBubble(e))};
+}
+
+// ═══════════════════════════════════════════
+// PUSH VIA GAS
+// ═══════════════════════════════════════════
+async function pushViaGAS(action,params,btnEl,successText,failText){
+  const origText=btnEl?btnEl.textContent:'';
+  const groupKey=getSelectedGroup();
+  if(groupKey==='PICKER'){
+    const entryId=params&&params.id;
+    const entry=entryId?globalEntriesData.find(e=>e.id===entryId):null;
+    if(action==='remind'&&entry){
+      if(btnEl){btnEl.disabled=true;btnEl.textContent='Opening...';}
+      return await shareViaLiff(buildUnackBubble(entry),'GDG Reminder: '+san(entry.kol),btnEl,successText||'Sent',failText||origText);
+    } else if(action==='remind_all'){
+      const c=buildUnackCarousel();
+      if(!c){alert('No unacknowledged orders.');return false;}
+      if(btnEl){btnEl.disabled=true;btnEl.textContent='Opening...';}
+      return await shareViaLiff(c,'GDG Unacknowledged Orders',btnEl,successText||'Sent',failText||origText);
+    }
+  }
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='Sending...';}
+  const userName=liffProfile?liffProfile.displayName:'PR Team';
+  let url=GAS_URL+'?action='+action+'&group='+encodeURIComponent(groupKey)+'&user='+encodeURIComponent(userName)+'&t='+Date.now();
+  for(const [k,v] of Object.entries(params||{})){url+='&'+encodeURIComponent(k)+'='+encodeURIComponent(v);}
+  diagLog('GAS push: '+action+' → '+groupKey,'warn');
+  try {
+    const res=await fetch(url,{redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status==='success'){
+      diagLog('Delivered. Group: '+groupKey,'ok');
+      if(btnEl){
+        btnEl.textContent=successText||'Sent';
+        if(btnEl.style) btnEl.style.background='#166534';
+        if(btnEl.style) btnEl.style.color='#fff';
+        setTimeout(()=>{ if(btnEl){btnEl.textContent=failText||origText;btnEl.style.background='';btnEl.style.color='';btnEl.disabled=false;}},5000);
+      }
+      return true;
+    } else {throw new Error(data.message||'GAS error');}
+  } catch(err){
+    diagLog('GAS FAILED: '+err.message,'err');
+    alert('Send failed: '+err.message);
+    if(btnEl){btnEl.disabled=false;btnEl.textContent=failText||origText;}
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════
+// SHARE VIA LIFF
+// ═══════════════════════════════════════════
+async function shareViaLiff(flexContents,altText,btnEl,successText,failText){
+  if(!isLiffClient){
+    if(btnEl){btnEl.disabled=false;if(failText)btnEl.textContent=failText;}
+    return false;
+  }
+  const safeAlt=altText.replace(/[^\x20-\x7E]/g,'').substring(0,390);
+  const messages=[{type:'flex',altText:safeAlt,contents:flexContents}];
+  diagLog('shareTargetPicker: '+JSON.stringify(messages).length+' chars','warn');
+  try {
+    const res=await liff.shareTargetPicker(messages,{isMultiple:true});
+    const st=res?res.status:'null';
+    diagLog('Picker result: '+st,st==='success'?'ok':'warn');
+    if(res&&res.status==='success'){
+      if(btnEl){btnEl.textContent=successText||'Sent';btnEl.classList.add('success');}
+      return true;
+    } else {
+      if(btnEl){btnEl.disabled=false;if(failText)btnEl.textContent=failText;}
+      return false;
+    }
+  } catch(err){
+    diagLog('shareTargetPicker FAILED: ['+(err.code||'?')+'] '+err.message,'err');
+    if(btnEl){btnEl.disabled=false;if(failText)btnEl.textContent=failText;}
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════
+// SEND ALL REMINDERS
+// ═══════════════════════════════════════════
+async function sendUnackCarousel(){
+  if(!isLiffClient){alert('Open in LINE app.');return;}
+  const unacked=globalEntriesData.filter(e=>!e.acknowledged||e.acknowledged.trim()==='');
+  if(!unacked.length){alert('No unacknowledged orders.');return;}
+  const btn=document.getElementById('btnSendAllUnack');
+  diagLog('Sending ALL '+unacked.length+' reminders','warn');
+  await pushViaGAS('remind_all',{},btn,'Sent ('+Math.min(unacked.length,10)+')','Send All Reminders');
+}
+
+async function sendOneReminder(entryId,btnEl){
+  if(!isLiffClient){alert('Open in LINE app.');return;}
+  diagLog('Sending alert for: '+entryId,'warn');
+  await pushViaGAS('remind',{id:entryId},btnEl,'Sent','Send Alert');
+}
+
+// ═══════════════════════════════════════════
+// RESEND THAI CARD
+// ═══════════════════════════════════════════
+async function resendThEntry(entryId,btnEl){
+  if(!isLiffClient){alert('Open in LINE app.');return;}
+  const origText=btnEl?btnEl.textContent:'';
+  const groupKey=getSelectedGroup();
+  const userName=liffProfile?liffProfile.displayName:'PR Team';
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='Sending...';}
+  diagLog('Sending Thai card: '+entryId+' → '+groupKey,'warn');
+  if(groupKey==='PICKER'){
+    try {
+      const res=await fetch(GAS_URL+'?action=resend_th&id='+encodeURIComponent(entryId)+'&noSend=1&t='+Date.now(),{redirect:'follow'});
+      const data=JSON.parse(await res.text());
+      if(data.status!=='success') throw new Error(data.message||'GAS error');
+      const entry=data.entry;
+      const isDelivery=String(entry.seedingType||entry.type||'').trim()==='Delivery';
+      const thLines=['ชื่อ: '+entry.kolName];
+      thLines.push('วันที่: '+entry.date);
+      if(entry.time) thLines.push('เวลา: '+entry.time);
+      if(isDelivery){
+        if(entry.packageStr) thLines.push('แพ็กเกจ: '+entry.packageStr);
+        const ph=entry.phone+(entry.backupPhone?' / '+entry.backupPhone:'');
+        if(ph) thLines.push('เบอร์: '+ph);
+        if(entry.address) thLines.push('ที่อยู่: '+entry.address);
+        if(entry.googleMap) thLines.push('แผนที่: '+entry.googleMap);
+      } else { if(entry.address) thLines.push('สาขา: '+entry.address); }
+      if(entry.notes) thLines.push('หมายเหตุ: '+entry.notes);
+      const thaiDispText=thLines.join('\n');
+      const copyUri='https://line.me/R/msg/text/?'+ encodeURIComponent(thaiDispText.substring(0,280));
+      const rows=[];
+      const addRow=(label,val)=>{if(!val||val==='—'||val==='N/A')return;rows.push({type:'box',layout:'horizontal',contents:[{type:'text',text:label,color:'#9a9690',size:'xxs',flex:2,weight:'bold'},{type:'text',text:String(val),color:'#1a1f2e',size:'xs',flex:5,weight:'bold',wrap:true}]});};
+      addRow('ชื่อ',entry.kolName);addRow('วันที่',entry.date);addRow('เวลา',entry.time);
+      if(isDelivery){addRow('แพ็กเกจ',entry.packageStr);addRow('เบอร์',entry.phone+(entry.backupPhone?' / '+entry.backupPhone:''));addRow('ที่อยู่',entry.address);addRow('แผนที่',entry.googleMap);}
+      else{addRow('สาขา',entry.address);}
+      if(entry.notes) addRow('หมายเหตุ',entry.notes);
+      const thFlex={type:'bubble',size:'mega',
+        header:{type:'box',layout:'vertical',backgroundColor:'#166534',paddingAll:'12px',contents:[{type:'text',text:isDelivery?'GDG SEEDING — การจัดส่ง':'GDG SEEDING — นัดหมาย',color:'#ffffff',weight:'bold',size:'xxs',align:'center'}]},
+        body:{type:'box',layout:'vertical',paddingAll:'20px',contents:[{type:'text',text:isDelivery?'รายการจัดส่ง':'นัดหมายสาขา',weight:'bold',color:'#166534',size:'lg'},{type:'separator',margin:'lg',color:'#e4e1db'},{type:'box',layout:'vertical',margin:'lg',spacing:'md',contents:rows}]},
+        footer:{type:'box',layout:'vertical',paddingAll:'12px',contents:[{type:'button',action:{type:'uri',label:'คัดลอกข้อมูลส่งงาน',uri:copyUri},style:'primary',color:'#166534',height:'sm'}]}
+      };
+      const result=await liff.shareTargetPicker([{type:'flex',altText:'GDG การ์ดจัดส่ง: '+entry.kolName,contents:thFlex},{type:'text',text:thaiDispText}],{isMultiple:true});
+      const st=result?result.status:'null';
+      diagLog('Picker: '+st,st==='success'?'ok':'warn');
+      if(result&&result.status==='success'){
+        if(btnEl){btnEl.textContent='Sent';btnEl.style.background='#166534';btnEl.style.color='#fff';
+          setTimeout(()=>{btnEl.textContent=origText;btnEl.style.background='';btnEl.style.color='';btnEl.disabled=false;},4000);}
+      } else {if(btnEl){btnEl.disabled=false;btnEl.textContent=origText;}}
+    } catch(err){diagLog('Thai card PICKER failed: '+err.message,'err');alert('Failed: '+err.message);if(btnEl){btnEl.disabled=false;btnEl.textContent=origText;}}
+    return;
+  }
+  try {
+    const url=GAS_URL+'?action=resend_th&id='+encodeURIComponent(entryId)+'&group='+encodeURIComponent(groupKey)+'&user='+encodeURIComponent(userName)+'&t='+Date.now();
+    const res=await fetch(url,{redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status==='success'){
+      diagLog('Thai card delivered: '+groupKey,'ok');
+      if(btnEl){btnEl.textContent='Sent';btnEl.style.background='#166534';btnEl.style.color='#fff';
+        setTimeout(()=>{btnEl.textContent=origText;btnEl.style.background='';btnEl.style.color='';btnEl.disabled=false;},4000);}
+    } else {throw new Error(data.message||'GAS error');}
+  } catch(err){diagLog('Thai card FAILED: '+err.message,'err');alert('Failed: '+err.message);if(btnEl){btnEl.disabled=false;btnEl.textContent=origText;}}
+}
+
+// ═══════════════════════════════════════════
+// MARK COMPLETE
+// ═══════════════════════════════════════════
+async function markComplete(entryId,btnEl){
+  const entry=globalEntriesData.find(e=>e.id===entryId);
+  if(!entry){diagLog('markComplete: entry not found for id='+entryId,'err');return;}
+  const origText=btnEl?btnEl.textContent:'Complete';
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='Updating...';}
+  const isDelivery=String(entry.type||'').trim()==='Delivery';
+  const statusCode=isDelivery?'LC':'V';
+  diagLog('Marking complete: '+san(entry.kol)+' ('+(isDelivery?'Delivery':'Visit')+')','warn');
+  try {
+    const kolSafe=(entry.kol||'').replace(/\s/g,'+').replace(/[^A-Za-z0-9+._-]/g,'');
+    const idSafe=(entryId||'').replace(/[^A-Za-z0-9-]/g,'');
+    const url=GAS_URL+'?action=complete&id='+idSafe+'&kol='+kolSafe+'&type='+(isDelivery?'D':'V')+'&sc='+statusCode+'&t='+Date.now();
+    const res=await fetch(url,{redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status==='success'){
+      const fullStatus=isDelivery?'Logistics Completed':'Visited';
+      diagLog('Complete OK: '+san(entry.kol),'ok');
+      entry.handoff=fullStatus;
+      if(btnEl){btnEl.textContent='Done';btnEl.style.background='#166534';btnEl.style.color='#fff';}
+      setTimeout(()=>{fetchDashboardData(document.getElementById('monthFilter').value);},1500);
+    } else {throw new Error(data.message||'GAS error');}
+  } catch(err){
+    diagLog('markComplete FAILED: '+err.message,'err');
+    alert('Complete failed: '+err.message);
+    if(btnEl){btnEl.disabled=false;btnEl.textContent=origText;}
+  }
+}
+
+// ═══════════════════════════════════════════
+// SEND CAMPAIGN SUMMARY
+// ═══════════════════════════════════════════
+async function sendSummary(btnEl){
+  if(!isLiffClient){alert('Open in LINE app.');return;}
+  const origText=btnEl?btnEl.textContent:'';
+  const groupKey=getSelectedGroup();
+  const userName=liffProfile?liffProfile.displayName:'PR Team';
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='Sending...';}
+  diagLog('Summary → '+groupKey,'warn');
+  if(groupKey==='PICKER'){
+    try {
+      const res=await fetch(GAS_URL+'?action=summary&noSend=1&user='+encodeURIComponent(userName)+'&t='+Date.now(),{redirect:'follow'});
+      const data=JSON.parse(await res.text());
+      if(data.status!=='success') throw new Error(data.message||'GAS error');
+      const total=data.total||0,deliveries=data.deliveries||0,visits=data.visits||0;
+      const acked=data.acked||0,pending=data.pending||0;
+      const toMin=Math.max(0,15-total),pct=Math.round((total/20)*100);
+      const status=total>=15?'ON TARGET':total>=10?'IN PROGRESS':'BELOW TARGET';
+      const month=String(data.month||'');
+      const sep='—'.repeat(28);
+      const txt=['GDG SEEDING — MONTHLY SUMMARY',sep,'Month:        '+month,'Status:       '+status,sep,'Total Seeded: '+total+' / 20 ('+pct+'%)','Deliveries:   '+deliveries,'Store Visits: '+visits,sep,'Acknowledged: '+acked+' / '+total,'Still Pending:'+pending,'To Min (15):  '+(toMin>0?(toMin+' more needed'):'Reached'),sep,'Sent by: '+(liffProfile?liffProfile.displayName:'PR Team')].join('\n');
+      const result=await liff.shareTargetPicker([{type:'text',text:txt}],{isMultiple:true});
+      const st=result?result.status:'null';
+      diagLog('Picker: '+st,st==='success'?'ok':'warn');
+      if(result&&result.status==='success'){
+        if(btnEl){btnEl.textContent='Sent';btnEl.classList.add('success');setTimeout(()=>{btnEl.textContent=origText;btnEl.classList.remove('success');btnEl.disabled=false;},5000);}
+      } else {if(btnEl){btnEl.disabled=false;btnEl.textContent=origText;}}
+    } catch(err){diagLog('Summary PICKER failed: '+err.message,'err');alert('Failed: '+err.message);if(btnEl){btnEl.disabled=false;btnEl.textContent=origText;}}
+    return;
+  }
+  try {
+    const url=GAS_URL+'?action=summary&group='+encodeURIComponent(groupKey)+'&user='+encodeURIComponent(userName)+'&t='+Date.now();
+    const res=await fetch(url,{redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status==='success'){
+      diagLog('Summary delivered: '+data.month+', total='+data.total,'ok');
+      if(btnEl){btnEl.textContent='Sent';btnEl.classList.add('success');setTimeout(()=>{btnEl.textContent=origText;btnEl.classList.remove('success');btnEl.disabled=false;},5000);}
+    } else {throw new Error(data.message||'GAS error');}
+  } catch(err){diagLog('Summary FAILED: '+err.message,'err');alert('Failed: '+err.message);if(btnEl){btnEl.disabled=false;btnEl.textContent=origText;}}
+}
+
+// ═══════════════════════════════════════════
+// RENDER: UNACK SECTION
+// ═══════════════════════════════════════════
+function renderUnackSection(){
+  const unacked=globalEntriesData.filter(e=>!e.acknowledged||e.acknowledged.trim()==='');
+  const section=document.getElementById('unackSection');
+  const sendBtn=document.getElementById('btnSendAllUnack');
+  if(!section) return;
+  if(unacked.length===0){section.style.display='none';if(sendBtn)sendBtn.classList.add('hidden');return;}
+  section.style.display='block';
+  if(sendBtn) sendBtn.classList.remove('hidden');
+  let html='';
+  unacked.forEach(entry=>{
+    const isDelivery=String(entry.type||'').trim()==='Delivery';
+    const hasPkg=entry.pkg&&entry.pkg!==''&&entry.pkg!=='N/A';
+    html+=`<div class="dispatch-card ${isDelivery?'accent-delivery':'accent-visit'}">
+      <div class="dispatch-card-inner">
+        <div class="dispatch-card-top">
+          <div class="dispatch-kol">${entry.kol||''}</div>
+          <span class="dispatch-type-pill ${isDelivery?'pill-delivery':'pill-visit'}">${isDelivery?'Delivery':'Visit'}</span>
+        </div>
+        <div class="dispatch-date">${formatDateTime(entry.date,entry.time)}</div>
+        ${hasPkg?`<div class="dispatch-pkg">${entry.pkg}</div>`:''}
+        <div class="btn-action-row">
+          <button class="btn-action" onclick="sendOneReminder('${entry.id}',this)">Send Alert</button>
+          <button class="btn-action" onclick="resendThEntry('${entry.id}',this)">Card</button>
+          <button class="btn-action" onclick="markComplete('${entry.id}',this)">Complete</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('unackCardList').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+// RENDER: DISPATCH LIST
+// ═══════════════════════════════════════════
+function renderDispatchList(){
+  const container=document.getElementById('dispatchList');
+  const wrap=document.getElementById('dispatchListWrap');
+  if(!container||!wrap||wrap.style.display==='none') return;
+  if(!globalEntriesData.length){
+    container.innerHTML='<div class="empty-state">No entries this month.</div>';
+    return;
+  }
+  const DONE=['Logistics Completed','Completed','Visited','No-Show / Cancelled'];
+  const active=globalEntriesData.filter(e=>!DONE.includes(e.handoff));
+  const done  =globalEntriesData.filter(e=> DONE.includes(e.handoff));
+  const buildCard=(entry,faded)=>{
+    const isDelivery=String(entry.type||'').trim()==='Delivery';
+    const isAcked=entry.acknowledged&&entry.acknowledged.trim()!=='';
+    const dis=isLiffClient?'':'disabled';
+    return `<div class="dispatch-card ${isDelivery?'accent-delivery':'accent-visit'}" style="${faded?'opacity:.5;':''}">
+      <div class="dispatch-card-inner">
+        <div class="dispatch-card-top">
+          <div class="dispatch-kol">${entry.kol||''}</div>
+          <span class="dispatch-type-pill ${isDelivery?'pill-delivery':'pill-visit'}">${isDelivery?'Delivery':'Visit'}</span>
+        </div>
+        <div class="dispatch-date">${formatDateTime(entry.date,entry.time)}</div>
+        ${entry.pkg&&entry.pkg!=='N/A'?`<div class="dispatch-pkg">${entry.pkg}</div>`:''}
+        ${isAcked?'<span class="dispatch-ack-chip chip-acked">Acknowledged</span>':''}
+        ${faded?`<div class="dispatch-status-done">${entry.handoff}</div>`:''}
+        <div class="btn-action-row">
+          <button class="btn-action" onclick="dispatchEntry('${entry.id}',this)" ${dis}>Dispatch</button>
+          <button class="btn-action" onclick="resendThEntry('${entry.id}',this)">Card (TH)</button>
+          ${!faded?`<button class="btn-action" onclick="markComplete('${entry.id}',this)">Complete</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  };
+  let html=active.map(e=>buildCard(e,false)).join('');
+  if(!html) html='<div class="empty-state">All entries are complete!</div>';
+  if(done.length>0){
+    const doneHtml=done.map(e=>buildCard(e,true)).join('');
+    html+=`<div style="margin-top:10px">
+      <button onclick="var d=this.nextElementSibling;var open=d.style.display!=='block';d.style.display=open?'block':'none';this.textContent=open?'Hide Completed (${done.length})':'Show Completed (${done.length})';"
+        class="archive-toggle">
+        Show Completed (${done.length})
+      </button>
+      <div style="display:none;margin-top:8px">${doneHtml}</div>
+    </div>`;
+  }
+  container.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+// DISPATCH ENTRY
+// ═══════════════════════════════════════════
+async function dispatchEntry(entryId,btnEl){
+  if(!isLiffClient){alert('Open in LINE to dispatch.');return;}
+  const entry=globalEntriesData.find(e=>e.id===entryId);
+  if(!entry){alert('Entry not found.');return;}
+  btnEl.disabled=true;btnEl.textContent='Opening...';
+  const isDelivery=String(entry.type||'').trim()==='Delivery';
+  const themeColor=isDelivery?'#166534':'#92570a';
+  const dispatchText=san(entry.dispatchText)||('Name: '+san(entry.kol)+' / Date: '+san(entry.date));
+  const copyUri='https://line.me/R/msg/text/?'+ encodeURIComponent(dispatchText.substring(0,280));
+  const rows=[];
+  const addRow=(label,val)=>{const v=san(val);if(!v||v==='—'||v==='N/A')return;rows.push({type:'box',layout:'baseline',spacing:'sm',contents:[{type:'text',text:label,color:'#9a9690',size:'xxs',flex:2,weight:'bold'},{type:'text',text:v,color:'#1a1f2e',size:'xs',flex:5,weight:'bold',wrap:true}]});};
+  addRow('NAME',entry.kol);addRow('DATE',formatDate(entry.date));addRow('TIME',entry.time);addRow('PKG',entry.pkg);
+  const flex={type:'bubble',size:'mega',
+    header:{type:'box',layout:'vertical',backgroundColor:themeColor,paddingAll:'12px',contents:[{type:'text',text:'GDG SEEDING SYSTEM',color:'#ffffff',weight:'bold',size:'xxs',align:'center'}]},
+    body:{type:'box',layout:'vertical',paddingAll:'20px',contents:[{type:'text',text:'NEW ENTRY',weight:'bold',color:themeColor,size:'lg'},{type:'text',text:isDelivery?'DELIVERY':'STORE VISIT',weight:'bold',size:'xxs',color:themeColor,margin:'xs'},{type:'separator',margin:'lg',color:'#e4e1db'},{type:'box',layout:'vertical',margin:'lg',spacing:'md',contents:rows}]},
+    footer:{type:'box',layout:'vertical',paddingAll:'12px',contents:[{type:'button',action:{type:'uri',label:'SHARE / COPY DISPATCH',uri:copyUri},style:'primary',color:themeColor,height:'sm'}]}
+  };
+  await shareViaLiff(flex,'GDG Seeding: '+san(entry.kol),btnEl,'Sent','Dispatch');
+}
+
+// ═══════════════════════════════════════════
+// ACCORDION TOGGLE
+// ═══════════════════════════════════════════
+function toggleDispatchList(headerEl){
+  const wrap=document.getElementById('dispatchListWrap');
+  const chev=document.getElementById('dispatchListChevron');
+  if(!wrap) return;
+  const open=wrap.style.display==='none'||wrap.style.display==='';
+  wrap.style.display=open?'block':'none';
+  if(chev) chev.style.transform=open?'rotate(180deg)':'';
+  if(open) renderDispatchList();
+}
+
+// ═══════════════════════════════════════════
+// FORM HELPERS
+// ═══════════════════════════════════════════
+function toggleCustomPackage(){
+  const s=document.getElementById('productPackageSelect');
+  const i=document.getElementById('productPackageOther');
+  i.style.display=s.value==='Others'?'block':'none';
+}
+function getFinalPackageStr(){
+  const s=document.getElementById('productPackageSelect');
+  return s.value==='Others'?(document.getElementById('productPackageOther').value||'Others'):s.value;
+}
+function copyDispatchText(){
+  const name=document.getElementById('kolName').value||'TBD';
+  const type=getSeedingType();
+  const date=document.getElementById('logDate').value||'TBD';
+  const time=document.getElementById('logTime').value||'TBD';
+  let text=type==='Store Invite'
+    ?('Name: '+name+'\nPackage: '+getFinalPackageStr()+'\nDate: '+date+'\nTime: '+time+'\nVenue: '+document.getElementById('storeVenue').value)
+    :('Name: '+name+'\nPhone: '+document.getElementById('logPhone').value+'\nPackage: '+getFinalPackageStr()+'\nDate: '+date+'\nTime: '+time+'\nAddress: '+document.getElementById('logAddress').value+'\nMap: '+document.getElementById('googleMap').value);
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('btnCopy');
+    btn.textContent='Copied';
+    setTimeout(()=>{btn.textContent='Copy';},2000);
+  });
+}
+// ═══════════════════════════════════════════
+// CLOUDINARY: KOL CONTENT SCREENSHOT UPLOAD
+// ═══════════════════════════════════════════
+async function uploadContentScreenshot(entryId, fileInputEl){
+  const file=fileInputEl.files&&fileInputEl.files[0];
+  if(!file) return;
+  const btn=document.getElementById('btnUpload_'+entryId);
+  if(btn){btn.disabled=true;btn.textContent='Uploading...';}
+  diagLog('Uploading content screenshot: '+entryId,'warn');
+  try {
+    if(CLOUDINARY_CLOUD_NAME==='YOUR_CLOUD_NAME'){throw new Error('Cloudinary not configured yet');}
+    const fd=new FormData();
+    fd.append('file',file);
+    fd.append('upload_preset',CLOUDINARY_UPLOAD_PRESET);
+    fd.append('folder','gdg-kol-content');
+    fd.append('context','entry_id='+entryId);
+    const cloudRes=await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`,{method:'POST',body:fd});
+    const cloudData=await cloudRes.json();
+    if(!cloudData.secure_url) throw new Error((cloudData.error&&cloudData.error.message)||'Cloudinary upload failed');
+    diagLog('Cloudinary OK: '+cloudData.secure_url,'ok');
+
+    // Persist the link + content status back into Sheets via the existing GAS route
+    const url=GAS_URL+'?action=update_entry&id='+encodeURIComponent(entryId)
+      +'&driveLink='+encodeURIComponent(cloudData.secure_url)
+      +'&contentStatus='+encodeURIComponent('Content Received')
+      +'&t='+Date.now();
+    const res=await fetch(url,{redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status!=='success') throw new Error(data.message||'Sheet update failed');
+
+    const entry=globalEntriesData.find(e=>e.id===entryId);
+    if(entry){entry.link=cloudData.secure_url;entry.content='Content Received';}
+    diagLog('Screenshot saved to entry: '+entryId,'ok');
+    fetchDashboardData(document.getElementById('monthFilter').value);
+  } catch(err){
+    diagLog('Upload FAILED: '+err.message,'err');
+    alert('Upload failed: '+err.message);
+    if(btn){btn.disabled=false;btn.textContent='Upload';}
+  }
+}
+
+function copyFromDashboard(id){
+  const entry=globalEntriesData.find(e=>e.id===id);
+  if(!entry) return;
+  const text=entry.dispatchText||('Name: '+entry.kol);
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('btnCopy_'+id);
+    if(btn){btn.textContent='OK';setTimeout(()=>{btn.textContent='Copy';},2000);}
+  });
+}
+
+// ═══════════════════════════════════════════
+// SUBMIT DATA ENTRY
+// ═══════════════════════════════════════════
+async function submitData(){
+  const btn=document.getElementById('btnSubmit');
+  const formats=[...document.querySelectorAll('.cb-format:checked')].map(cb=>cb.value);
+  const type=getSeedingType();
+  const payload={
+    action:'add',kolName:document.getElementById('kolName').value,
+    handleUrl:document.getElementById('handleUrl').value,
+    seedingType:type,deliverable:formats.join(', '),
+    date:document.getElementById('logDate').value,
+    time:document.getElementById('logTime').value,
+    packageStr:getFinalPackageStr(),
+    phone:type==='Store Invite'?'N/A':document.getElementById('logPhone').value,
+    backupPhone:type==='Store Invite'?'':document.getElementById('backupPhone').value,
+    address:type==='Store Invite'?document.getElementById('storeVenue').value:document.getElementById('logAddress').value,
+    googleMap:type==='Store Invite'?'':document.getElementById('googleMap').value,
+    notes:document.getElementById('logNotes').value
+  };
+  btn.textContent='Saving...'; btn.disabled=true;
+  diagLog('POST: adding new entry...','warn');
+  try {
+    const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain;charset=utf-8'},redirect:'follow'});
+    const result=JSON.parse(await res.text());
+    if(result.status==='success'){
+      diagLog('Entry saved OK','ok');
+      btn.textContent='Saved!'; btn.classList.add('success');
+      document.querySelectorAll('#viewEntry .input-box').forEach(el=>{if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') el.value='';});
+      document.querySelectorAll('.cb-format').forEach(cb=>cb.checked=false);
+      updateFormatCreditHint();
+      // Reset to delivery
+      document.getElementById('typeDelivery').checked=true;
+      onSeedingTypeChange();
+      const now=new Date();
+      const realMonth=now.toLocaleString('en-US',{month:'long'})+' '+now.getFullYear();
+      const syncDD=(selId)=>{const sel=document.getElementById(selId);if(!sel)return;let found=false;for(let i=0;i<sel.options.length;i++){if(sel.options[i].value===realMonth){sel.options[i].selected=true;found=true;break;}}if(!found){const opt=document.createElement('option');opt.value=realMonth;opt.textContent=realMonth;opt.selected=true;sel.insertBefore(opt,sel.firstChild);}};
+      syncDD('monthFilter'); syncDD('dispatchMonthFilter');
+      fetchDashboardData(realMonth);
+      setTimeout(()=>{btn.textContent='Log Entry';btn.classList.remove('success');btn.disabled=false;},3000);
+    } else {throw new Error(result.message||'GAS error');}
+  } catch(err){
+    diagLog('Submit FAILED: '+err.message,'err');
+    btn.textContent='Error — retry'; btn.disabled=false;
+    setTimeout(()=>{btn.textContent='Log Entry';},3000);
+  }
+}
+
+// ═══════════════════════════════════════════
+// FETCH DASHBOARD DATA
+// ═══════════════════════════════════════════
+async function fetchDashboardData(selectedMonth){
+  if(selectedMonth==='__new_cycle__') return;
+  diagLog('Fetching live data...','warn');
+  try {
+    let url=GAS_URL+'?t='+Date.now();
+    if(selectedMonth) url+='&month='+encodeURIComponent(selectedMonth);
+    const res=await fetch(url,{redirect:'follow'});
+    const result=JSON.parse(await res.text());
+    if(result.status!=='success') throw new Error(result.message||'GAS error');
+    const d=result.data;
+    globalEntriesData=d.entries;
+    diagLog('Data loaded: '+d.entries.length+' entries','ok');
+
+    const addCycleOpt=(sel)=>{const opt=document.createElement('option');opt.value='__new_cycle__';opt.textContent='+ Start New Month Cycle';sel.appendChild(opt);};
+    const mSel=document.getElementById('monthFilter');
+    if(mSel){mSel.innerHTML='';(d.availableMonths||[]).forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;if(m===d.month)o.selected=true;mSel.appendChild(o);});addCycleOpt(mSel);}
+    const dmSel=document.getElementById('dispatchMonthFilter');
+    if(dmSel){dmSel.innerHTML='';(d.availableMonths||[]).forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;if(m===d.month)o.selected=true;dmSel.appendChild(o);});addCycleOpt(dmSel);}
+
+    const totalCredits=computeCredits(d.entries);
+    document.getElementById('valTotalCredits').textContent=totalCredits;
+    document.getElementById('valPendingDel').textContent=d.pendingDeliveries;
+    document.getElementById('valToMin').textContent=Math.max(0,CREDIT_TARGET-totalCredits);
+    document.getElementById('valToMax').textContent=d.totalSeeded;
+    document.getElementById('progressBar').style.width=Math.min(100,(totalCredits/CREDIT_TARGET)*100)+'%';
+    document.getElementById('lastUpdatedText').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('dispatchHeroCount').textContent=d.totalSeeded;
+    document.getElementById('dispatchHeroSub').textContent=d.totalDeliveries+' Deliveries · '+d.totalVisits+' Visits · '+totalCredits+' / '+CREDIT_TARGET+' credits';
+
+    if(d.packages&&d.packages.length){
+      const pSel=document.getElementById('productPackageSelect');
+      if(pSel){pSel.innerHTML='<option value="">Select package...</option>';d.packages.forEach(p=>{pSel.innerHTML+=`<option value="${p}">${p}</option>`;});pSel.innerHTML+='<option value="Others">Others (specify)</option>';}
+    }
+
+    const tbody=document.getElementById('entriesTableBody');
+    const archiveMaster=document.getElementById('archiveMaster');
+    const btnShowMaster=document.getElementById('btnShowMaster');
+    if(tbody){
+      if(!d.entries.length){
+        tbody.innerHTML='<div class="empty-state">No entries this month</div>';
+        if(btnShowMaster) btnShowMaster.style.display='none';
+      } else {
+        let activeHtml='',completedHtml='',completedCount=0;
+        const DONE=['Logistics Completed','Completed','No-Show / Cancelled','Visited'];
+        d.entries.forEach(entry=>{
+          if(!entry.kol||!entry.kol.trim()) return;
+          const badgeClass=entry.handoff==='Pending'?'badge-pending':(entry.handoff==='Acknowledged'?'badge-ack':'badge-done');
+          const handleText=(entry.url&&entry.url!=='TBD')?entry.url.replace(/https?:\/\//,'').replace('instagram.com/','@'):'—';
+          const isD=String(entry.type).trim()==='Delivery';
+          const row=`<div class="list-row">
+            <div class="col-kol">
+              <span class="kol-name">${entry.kol}</span>
+              <span class="kol-handle">${handleText}</span>
+            </div>
+            <div>
+              <span class="date-val">${entry.date}</span>
+              <div class="type-tag">${isD?'Delivery':'Visit'}</div>
+            </div>
+            <span class="soft-badge ${badgeClass}">${entry.handoff}</span>
+            <div class="list-row-actions">
+              <button class="icon-btn" id="btnCopy_${entry.id}" onclick="copyFromDashboard('${entry.id}')">Copy</button>
+              ${entry.link
+                ? `<button class="icon-btn uploaded" onclick="window.open('${entry.link}','_blank')">View</button>`
+                : `<button class="icon-btn" id="btnUpload_${entry.id}" onclick="document.getElementById('fileInput_${entry.id}').click()">Upload</button>`}
+              <input type="file" accept="image/*" id="fileInput_${entry.id}" style="display:none" onchange="uploadContentScreenshot('${entry.id}', this)">
+            </div>
+          </div>`;
+          if(DONE.includes(entry.handoff)){completedHtml+=row;completedCount++;}else{activeHtml+=row;}
+        });
+        tbody.innerHTML=activeHtml||'<div class="empty-state">All entries completed</div>';
+        if(archiveMaster) archiveMaster.innerHTML=completedHtml;
+        if(btnShowMaster){btnShowMaster.style.display=completedCount>0?'block':'none';if(completedCount>0)btnShowMaster.textContent='Show Completed History ('+completedCount+')';}
+      }
+    }
+
+    if(document.getElementById('viewDispatch').style.display!=='none') renderDispatchList();
+    renderUnackSection();
+
+  } catch(err){
+    diagLog('Fetch FAILED: '+err.message,'err');
+  }
+}
+
+// ═══════════════════════════════════════════
+// ARCHIVE TOGGLE
+// ═══════════════════════════════════════════
+function toggleArchive(id,btn){
+  const d=document.getElementById(id);
+  if(!d) return;
+  const open=!d.style.display||d.style.display==='none';
+  d.style.display=open?'block':'none';
+  btn.textContent=btn.textContent.replace(open?'Show':'Hide',open?'Hide':'Show');
+}
+
+// ═══════════════════════════════════════════
+// NEW MONTH CYCLE
+// ═══════════════════════════════════════════
+function openNewCycleModal(){
+  const total=globalEntriesData.length;
+  const DONE=['Logistics Completed','Completed','Visited','No-Show / Cancelled'];
+  const done=globalEntriesData.filter(e=>DONE.includes(e.handoff)).length;
+  const mSel=document.getElementById('monthFilter');
+  const prevMonth=mSel&&mSel.value&&mSel.value!=='__new_cycle__'?mSel.value:'Current Month';
+  const now=new Date();
+  const nextMonth=now.toLocaleString('en-US',{month:'long'})+' '+now.getFullYear();
+  const prevEl=document.getElementById('newCyclePrevMonth');
+  const nextEl=document.getElementById('newCycleNewMonth');
+  const subEl =document.getElementById('newCycleSubtitle');
+  if(prevEl) prevEl.textContent=prevMonth;
+  if(nextEl) nextEl.textContent=nextMonth;
+  if(subEl)  subEl.textContent='Closing '+prevMonth+' · Opening '+nextMonth;
+  document.getElementById('cycleStatTotal').textContent=total;
+  document.getElementById('cycleStatDone').textContent=done;
+  document.getElementById('cycleStatPending').textContent=total-done;
+  const modal=document.getElementById('newCycleModal');
+  modal.style.display='flex';
+}
+function closeNewCycleModal(){
+  document.getElementById('newCycleModal').style.display='none';
+}
+async function confirmNewCycle(btnEl){
+  const origText=btnEl.textContent;
+  btnEl.disabled=true; btnEl.textContent='Starting...';
+  const sendSummaryChk=document.getElementById('cyclesSendSummary').checked;
+  if(sendSummaryChk&&isLiffClient){
+    try {
+      const userName=liffProfile?liffProfile.displayName:'PR Team';
+      diagLog('Sending closing summary...','warn');
+      const url=GAS_URL+'?action=summary&group=PR_WORK&user='+encodeURIComponent(userName)+'&t='+Date.now();
+      const res=await fetch(url,{redirect:'follow'});
+      const data=JSON.parse(await res.text());
+      diagLog('Closing summary sent: '+(data.month||'')+', total='+(data.total||0),'ok');
+    } catch(err){ diagLog('Summary send failed (continuing): '+err.message,'warn'); }
+  }
+  const now=new Date();
+  const realMonth=now.toLocaleString('en-US',{month:'long'})+' '+now.getFullYear();
+  // Optionally start the new cycle in a caller-chosen month instead of "now":
+  // pass entryMonth through to the backend when you next submitData() if needed.
+  const addOpt=(sel,val)=>{if(!sel)return;let found=false;for(let i=0;i<sel.options.length;i++){if(sel.options[i].value===val){sel.options[i].selected=true;found=true;break;}}if(!found){const opt=document.createElement('option');opt.value=val;opt.textContent=val;opt.selected=true;sel.insertBefore(opt,sel.firstChild);}};
+  addOpt(document.getElementById('monthFilter'),realMonth);
+  addOpt(document.getElementById('dispatchMonthFilter'),realMonth);
+  closeNewCycleModal();
+  diagLog('New cycle started: '+realMonth,'ok');
+  await fetchDashboardData(realMonth);
+  if(isLiffClient) switchView('dispatch');
+  btnEl.disabled=false; btnEl.textContent=origText;
+}
+
+// ═══════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════
+window.onload=async function(){
+  await initLiff();
+  document.querySelectorAll('.cb-format').forEach(cb=>cb.addEventListener('change',updateFormatCreditHint));
+  if(isLiffClient) switchView('dispatch');
+  const bootMonth=new Date().toLocaleString('en-US',{month:'long'})+' '+new Date().getFullYear();
+  fetchDashboardData(bootMonth);
+};
+</script>
+</body>
+</html>

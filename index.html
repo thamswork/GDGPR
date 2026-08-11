@@ -176,7 +176,7 @@
     .col-kol{display:flex;flex-direction:column;gap:3px;min-width:0}
     .kol-name{font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .kol-handle{font-size:9px;font-weight:600;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .date-val{font-size:11px;font-weight:600;color:var(--text)}
+    .date-val{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap}
     .type-tag{font-size:8px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
     .soft-badge{
       display:inline-flex;align-items:center;
@@ -1815,7 +1815,7 @@ async function fetchDashboardData(selectedMonth){
               <span class="kol-handle">${handleText}</span>
             </div>
             <div>
-              <span class="date-val">${entry.date}</span>
+              <span class="date-val">${formatDate(entry.date)}</span>
               <div class="type-tag">${isD?'Delivery':'Visit'}</div>
             </div>
             <span class="soft-badge ${badgeClass}">${entry.handoff}</span>

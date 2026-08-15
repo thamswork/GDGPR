@@ -149,6 +149,9 @@
     }
     .dash-alert-label{font-size:10px;font-weight:700;color:var(--s-amber);text-transform:uppercase;letter-spacing:.5px}
     .dash-alert-val{font-size:20px;font-weight:800;color:var(--s-amber)}
+    .content-status-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 10px;border-radius:8px}
+    .content-status-badge.received{background:var(--s-amber-bg);color:var(--s-amber)}
+    .content-status-badge.confirmed{background:var(--s-green-bg);color:var(--s-green)}
     .dash-metrics{display:grid;grid-template-columns:1fr 1fr;gap:0}
     .dash-metric-box{
       padding:14px 0;
@@ -542,12 +545,19 @@
         <div class="dash-hero-val" id="valTotalCredits">--</div>
       </div>
       <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
-      <div class="dash-alert">
+      <div class="dash-alert" style="margin-bottom:8px">
         <div>
           <div class="dash-alert-label">Pending Deliveries</div>
           <div style="font-size:10px;color:var(--s-amber);margin-top:2px;font-weight:500">Awaiting acknowledgement</div>
         </div>
         <div class="dash-alert-val" id="valPendingDel">--</div>
+      </div>
+      <div class="dash-alert">
+        <div>
+          <div class="dash-alert-label">Pending Content Confirmation</div>
+          <div style="font-size:10px;color:var(--s-amber);margin-top:2px;font-weight:500">Uploaded, not yet confirmed</div>
+        </div>
+        <div class="dash-alert-val" id="valPendingContent">--</div>
       </div>
       <div class="dash-metrics">
         <div class="dash-metric-box">
@@ -894,17 +904,22 @@
 
     <div class="field-divider" style="margin-bottom:16px"></div>
 
-    <div class="input-label" style="margin-bottom:8px">Uploaded Content</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="input-label" style="margin-bottom:0">Uploaded Content</div>
+      <span id="entryModalContentBadge" class="content-status-badge" style="display:none">—</span>
+    </div>
     <span id="entryModalLinksCount" style="font-size:11px;color:var(--text-3);font-weight:600;display:block;margin-bottom:8px">No content yet</span>
     <div id="entryModalPreviewGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px"></div>
 
     <button class="btn-primary btn-secondary" id="entryModalUploadBtn" onclick="document.getElementById('entryModalFileInput').click()" style="height:40px;font-size:11px;margin-bottom:10px">Upload Screenshot(s)</button>
     <input type="file" accept="image/*" multiple id="entryModalFileInput" style="display:none" onchange="handleModalUpload(this)">
 
-    <div style="display:flex;gap:6px;margin-bottom:18px">
+    <div style="display:flex;gap:6px;margin-bottom:12px">
       <input type="url" id="entryModalLinkInput" class="input-box" placeholder="Paste reel / post link..." style="height:40px;font-size:12px">
       <button class="icon-btn" id="entryModalAddLinkBtn" onclick="addContentLink()" style="height:40px;padding:0 14px">Add</button>
     </div>
+
+    <button class="btn-primary" id="entryModalConfirmBtn" onclick="confirmContent()" style="display:none;height:44px;font-size:12px;background:var(--s-green);margin-bottom:18px">Confirm Content</button>
 
     <div class="field-divider" style="margin-bottom:16px"></div>
 
@@ -1627,8 +1642,58 @@ function openEntryModal(entryId){
   }).join('');
   updateModalCreditHint();
   renderModalPreview(entry);
+  updateContentConfirmUI(entry);
 
   document.getElementById('entryModal').style.display='flex';
+}
+
+function updateContentConfirmUI(entry){
+  const badge=document.getElementById('entryModalContentBadge');
+  const confirmBtn=document.getElementById('entryModalConfirmBtn');
+  const hasContent=!!(entry.link && entry.link.trim());
+  const status=entry.content||'';
+
+  if(!hasContent){
+    badge.style.display='none';
+    confirmBtn.style.display='none';
+    return;
+  }
+  badge.style.display='inline-block';
+  if(status==='Confirmed'){
+    badge.textContent='Confirmed';
+    badge.className='content-status-badge confirmed';
+    confirmBtn.style.display='none';
+  } else {
+    badge.textContent='Content Received';
+    badge.className='content-status-badge received';
+    confirmBtn.style.display='block';
+    confirmBtn.disabled=false;
+    confirmBtn.textContent='Confirm Content';
+  }
+}
+
+async function confirmContent(){
+  if(!currentModalEntryId) return;
+  const entry=globalEntriesData.find(e=>e.id===currentModalEntryId);
+  const btn=document.getElementById('entryModalConfirmBtn');
+  const orig=btn.textContent;
+  btn.disabled=true; btn.textContent='Confirming...';
+  try {
+    const url=GAS_URL+'?action=update_entry&id='+encodeURIComponent(currentModalEntryId)
+      +'&contentStatus='+encodeURIComponent('Confirmed')
+      +'&t='+Date.now();
+    const res=await fetch(url,{redirect:'follow'});
+    const data=JSON.parse(await res.text());
+    if(data.status!=='success') throw new Error(data.message||'Confirm failed');
+    if(entry) entry.content='Confirmed';
+    diagLog('Content confirmed: '+currentModalEntryId,'ok');
+    await fetchDashboardData(document.getElementById('monthFilter').value);
+    if(currentModalEntryId) openEntryModal(currentModalEntryId);
+  } catch(err){
+    diagLog('Confirm FAILED: '+err.message,'err');
+    alert('Confirm failed: '+err.message);
+    btn.disabled=false; btn.textContent=orig;
+  }
 }
 function closeEntryModal(){
   document.getElementById('entryModal').style.display='none';
@@ -1684,7 +1749,7 @@ async function addContentLink(){
     const res=await fetch(url,{redirect:'follow'});
     const data=JSON.parse(await res.text());
     if(data.status!=='success') throw new Error(data.message||'Save failed');
-    if(entry){ entry.link=combined; entry.content='Content Received'; renderModalPreview(entry); }
+    if(entry){ entry.link=combined; entry.content='Content Received'; renderModalPreview(entry); updateContentConfirmUI(entry); }
     input.value='';
     diagLog('Link added: '+currentModalEntryId,'ok');
     fetchDashboardData(document.getElementById('monthFilter').value);
@@ -1782,6 +1847,7 @@ async function fetchDashboardData(selectedMonth){
     const totalCredits=computeCredits(d.entries);
     document.getElementById('valTotalCredits').textContent=totalCredits;
     document.getElementById('valPendingDel').textContent=d.pendingDeliveries;
+    document.getElementById('valPendingContent').textContent=d.pendingContentConfirmation!==undefined?d.pendingContentConfirmation:'--';
     document.getElementById('valToMin').textContent=Math.max(0,CREDIT_TARGET-totalCredits);
     document.getElementById('valToMax').textContent=d.totalSeeded;
     document.getElementById('progressBar').style.width=Math.min(100,(totalCredits/CREDIT_TARGET)*100)+'%';

@@ -545,13 +545,6 @@
         <div class="dash-hero-val" id="valTotalCredits">--</div>
       </div>
       <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
-      <div class="dash-alert" style="margin-bottom:8px">
-        <div>
-          <div class="dash-alert-label">Pending Deliveries</div>
-          <div style="font-size:10px;color:var(--s-amber);margin-top:2px;font-weight:500">Awaiting acknowledgement</div>
-        </div>
-        <div class="dash-alert-val" id="valPendingDel">--</div>
-      </div>
       <div class="dash-alert">
         <div>
           <div class="dash-alert-label">Pending Content Confirmation</div>
@@ -1846,7 +1839,6 @@ async function fetchDashboardData(selectedMonth){
 
     const totalCredits=computeCredits(d.entries);
     document.getElementById('valTotalCredits').textContent=totalCredits;
-    document.getElementById('valPendingDel').textContent=d.pendingDeliveries;
     document.getElementById('valPendingContent').textContent=d.pendingContentConfirmation!==undefined?d.pendingContentConfirmation:'--';
     document.getElementById('valToMin').textContent=Math.max(0,CREDIT_TARGET-totalCredits);
     document.getElementById('valToMax').textContent=d.totalSeeded;
